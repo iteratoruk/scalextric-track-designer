@@ -120,3 +120,11 @@ export const c8234: PieceDef = makeCurve({
   centreRadius: 292.5,
   angleDeg: 22.5,
 });
+
+// R3 outer 526, inner 371, centre-line 448.5 mm. Only ships as a 22.5° half-curve.
+export const c8204: PieceDef = makeCurve({
+  id: "c8204-r3-curve",
+  name: "C8204 R3 Curve (22.5°)",
+  centreRadius: 448.5,
+  angleDeg: 22.5,
+});

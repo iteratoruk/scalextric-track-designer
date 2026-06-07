@@ -19,6 +19,7 @@ for the full plan):
 | C8278 | R1 Half Curve (22.5°) | Same radii as C8202; 8 pieces make a 180° hairpin    |
 | C8206 | R2 Curve (45°)        | Outer R 370 mm, inner R 215 mm, centre-line 292.5 mm |
 | C8234 | R2 Half Curve (22.5°) | Same radii as C8206; 8 pieces make a 180° hairpin    |
+| C8204 | R3 Curve (22.5°)      | Outer R 526 mm, inner R 371 mm, centre-line 448.5 mm |
 
 All curves are rendered through a shared `makeCurve()` factory in
 [`src/catalogue/curve.ts`](src/catalogue/curve.ts), so additional radii and
