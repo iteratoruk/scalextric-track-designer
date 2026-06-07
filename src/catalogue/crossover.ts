@@ -207,12 +207,18 @@ export const c8295: PieceDef = makeCrossover({
   elevated: true,
 });
 
-// C8210 Straight Crossover — symmetric `+` of two 409 mm straights crossing at
-// 90° at their midpoints. The per-side geometry on makeCrossover is retained
-// for future asymmetric variants if needed.
+// C8210 Straight Crossover — asymmetric `+` of two 409 mm straights crossing
+// at 90°. Per user spec: each segment's outer edge crosses 59 mm in from the
+// end of the other segment, putting the centre of the crossing 136.5 mm from
+// one end of each segment and 272.5 mm from the other. Translated to the
+// factory's per-side geometry:
+//   A west / B north = 136.5 mm (short side)
+//   A east / B south = 272.5 mm (long side)
+// Visually the X has two long arms (east, south) and two short arms (west,
+// north), all four ends carrying a connector lug.
 export const c8210: PieceDef = makeCrossover({
   id: "c8210-straight-crossover",
   name: "C8210 Straight Crossover",
-  segmentLength: 409,
+  geometry: { aWest: 136.5, aEast: 272.5, bNorth: 136.5, bSouth: 272.5 },
   elevated: false,
 });
