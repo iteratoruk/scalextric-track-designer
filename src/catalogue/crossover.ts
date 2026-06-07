@@ -207,14 +207,12 @@ export const c8295: PieceDef = makeCrossover({
   elevated: true,
 });
 
-// C8210 Straight Crossover — asymmetric: each segment is 409 mm total, split
-// into a 350 mm standard portion and a 59 mm extension that overlaps the
-// perpendicular segment. A's standard runs west of the crossing; B's standard
-// runs south. The two standard portions meet at their (short) edges at the
-// crossing corner, with the extensions providing the overlap zone.
+// C8210 Straight Crossover — symmetric `+` of two 409 mm straights crossing at
+// 90° at their midpoints. The per-side geometry on makeCrossover is retained
+// for future asymmetric variants if needed.
 export const c8210: PieceDef = makeCrossover({
   id: "c8210-straight-crossover",
   name: "C8210 Straight Crossover",
-  geometry: { aWest: 350, aEast: 59, bNorth: 59, bSouth: 350 },
+  segmentLength: 409,
   elevated: false,
 });
