@@ -67,10 +67,17 @@ pieces, undo / redo, GitHub Pages deploy workflow.
 
 ```sh
 npm install
-npm run dev       # http://localhost:5173
-npm run build     # type-check then produce dist/
-npm run preview   # serve the production build locally
+npm run dev        # http://localhost:5173
+npm run build      # type-check then produce dist/
+npm run test       # vitest in watch mode
+npm run test:run   # one-shot test run
+npm run preview    # serve the production build locally
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) — short version: open an issue, add a
+test, make it pass, open a PR.
 
 ## Controls
 
