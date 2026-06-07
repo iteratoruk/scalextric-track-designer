@@ -120,8 +120,10 @@ export function makeRacingCurve(opts: RacingCurveOptions): PieceDef {
   };
 }
 
-// C8193 Racing Curve — R2 90° (= 2 × standard C8206) with crossing slots.
-// Pack contains 2 physically identical pieces; no narrowing/expanding pairing.
+// C8193 Racing Curve — two standard R2 curves' worth of arc (90°) with the
+// slots crossing midway, so a car going in on the inside finishes on the
+// outside. Pack contains 2 physically identical pieces; no narrowing /
+// expanding pairing.
 export const c8193: PieceDef = makeRacingCurve({
   id: "c8193-racing-curve",
   name: "C8193 Racing Curve",
