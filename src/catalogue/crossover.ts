@@ -10,11 +10,31 @@ const SLOT_GAP = 10; // mm — break in a slot where a perpendicular slot crosse
 
 const BORDER_CENTRE = W / 2 - BORDER / 2;
 
+/**
+ * Geometry of a 90° crossover. The crossing point is the local-frame origin.
+ * Segment A runs horizontally (west ↔ east); segment B runs vertically
+ * (north ↔ south, where +y is south in screen coords). Each "side" length is
+ * the distance from the crossing to that segment's connector — so a symmetric
+ * crossover sets all four to the same value, and an asymmetric one varies them.
+ */
+interface CrossoverGeometry {
+  /** Distance from the crossing to segment A's west (conn 0) connector. */
+  aWest: number;
+  /** Distance from the crossing to segment A's east (conn 1) connector. */
+  aEast: number;
+  /** Distance from the crossing to segment B's north (conn 2) connector. */
+  bNorth: number;
+  /** Distance from the crossing to segment B's south (conn 3) connector. */
+  bSouth: number;
+}
+
 interface CrossoverOptions {
   id: string;
   name: string;
-  /** Length of each straight segment, in mm. */
-  segmentLength: number;
+  /** Convenience for a symmetric crossover: sets all four sides to half this. */
+  segmentLength?: number;
+  /** For asymmetric crossovers, specify each side explicitly. */
+  geometry?: CrossoverGeometry;
   /** Rotation step for the R-key / rotation handles. Defaults to 90°. */
   rotateStep?: number;
   /**
@@ -23,73 +43,84 @@ interface CrossoverOptions {
    * under B's footprint signals the elevation.
    *
    * If false (default), both segments share the same level: the two bodies
-   * overlap at the crossing forming a `+` footprint, and each slot is
-   * visibly broken at the points where a perpendicular slot crosses it.
+   * overlap at the crossing and each slot is visibly broken at the points
+   * where a perpendicular slot crosses it.
    */
   elevated?: boolean;
 }
 
 export function makeCrossover(opts: CrossoverOptions): PieceDef {
-  const { id, name, segmentLength: LEN, elevated = false } = opts;
-  const half = LEN / 2;
+  const { id, name, elevated = false } = opts;
+  const geom = resolveGeometry(opts);
 
-  // Local frame centred on the crossing point.
-  // 0: west — segment A's left  end (faces -x, angle 180)
-  // 1: east — segment A's right end (faces +x, angle 0)
-  // 2: north — segment B's top  end (faces -y, angle 270)
-  // 3: south — segment B's bottom end (faces +y, angle 90)
+  // Connectors numbered around the crossing: 0=west, 1=east, 2=north, 3=south.
   const connectors: Connector[] = [
-    { pos: { x: -half, y: 0 }, angle: 180 },
-    { pos: { x: half, y: 0 }, angle: 0 },
-    { pos: { x: 0, y: -half }, angle: 270 },
-    { pos: { x: 0, y: half }, angle: 90 },
+    { pos: { x: -geom.aWest, y: 0 }, angle: 180 },
+    { pos: { x: geom.aEast, y: 0 }, angle: 0 },
+    { pos: { x: 0, y: -geom.bNorth }, angle: 270 },
+    { pos: { x: 0, y: geom.bSouth }, angle: 90 },
   ];
+
+  // Bbox is the axis-aligned hull of both segment bodies in local coords.
+  const minX = Math.min(-geom.aWest, -W / 2);
+  const maxX = Math.max(geom.aEast, W / 2);
+  const minY = Math.min(-geom.bNorth, -W / 2);
+  const maxY = Math.max(geom.bSouth, W / 2);
 
   return {
     id,
     name,
     connectors,
     rotateStep: opts.rotateStep ?? 90,
-    bbox: { x: -half, y: -half, w: LEN, h: LEN },
+    bbox: { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
     render() {
-      return elevated ? renderElevated(half) : renderFlat(half);
+      return elevated ? renderElevated(geom) : renderFlat(geom);
     },
   };
 }
 
-function renderElevated(half: number): SVGElement[] {
+function resolveGeometry(opts: CrossoverOptions): CrossoverGeometry {
+  if (opts.geometry) return opts.geometry;
+  if (opts.segmentLength === undefined) {
+    throw new Error(`Crossover ${opts.id}: provide either segmentLength or geometry`);
+  }
+  const half = opts.segmentLength / 2;
+  return { aWest: half, aEast: half, bNorth: half, bSouth: half };
+}
+
+function renderElevated(geom: CrossoverGeometry): SVGElement[] {
   // Segment A under, drop-shadow, then segment B over. B's body conceals A's
   // slots at the crossing — the user-facing over/under indicator.
   return [
-    ...horizontalSegment(half),
-    verticalShadow(half),
-    ...verticalSegment(half),
+    ...horizontalSegment(geom),
+    verticalShadow(geom),
+    ...verticalSegment(geom),
   ];
 }
 
-function renderFlat(half: number): SVGElement[] {
-  const len = half * 2;
+function renderFlat(geom: CrossoverGeometry): SVGElement[] {
+  const { aWest, aEast, bNorth, bSouth } = geom;
   const parts: SVGElement[] = [];
 
-  // Both bodies drawn at the same level — overlap at the crossing fills a `+`.
-  parts.push(rect(-half, -W / 2, len, W, "body"));
-  parts.push(rect(-W / 2, -half, W, len, "body"));
+  // Both bodies drawn at the same level — overlap at the crossing fills the `+`.
+  parts.push(rect(-aWest, -W / 2, aWest + aEast, W, "body"));
+  parts.push(rect(-W / 2, -bNorth, W, bNorth + bSouth, "body"));
 
-  // Borders run continuously along each axis (BORDER=0 today, so visually
-  // invisible — kept for parity with the straight renderer).
-  parts.push(line(-half, -BORDER_CENTRE, half, -BORDER_CENTRE, "border", BORDER));
-  parts.push(line(-half, BORDER_CENTRE, half, BORDER_CENTRE, "border", BORDER));
-  parts.push(line(-BORDER_CENTRE, -half, -BORDER_CENTRE, half, "border", BORDER));
-  parts.push(line(BORDER_CENTRE, -half, BORDER_CENTRE, half, "border", BORDER));
+  // Borders run continuously along each segment's length (BORDER=0 today,
+  // so visually invisible — kept for parity with the straight renderer).
+  parts.push(line(-aWest, -BORDER_CENTRE, aEast, -BORDER_CENTRE, "border", BORDER));
+  parts.push(line(-aWest, BORDER_CENTRE, aEast, BORDER_CENTRE, "border", BORDER));
+  parts.push(line(-BORDER_CENTRE, -bNorth, -BORDER_CENTRE, bSouth, "border", BORDER));
+  parts.push(line(BORDER_CENTRE, -bNorth, BORDER_CENTRE, bSouth, "border", BORDER));
 
   // Rails — continuous, accept the small `+` crossing artefact at intersections.
   for (const sign of [-1, 1] as const) {
     const y = sign * SLOT_Y;
-    parts.push(line(-half, y - RAIL_OFFSET, half, y - RAIL_OFFSET, "rail"));
-    parts.push(line(-half, y + RAIL_OFFSET, half, y + RAIL_OFFSET, "rail"));
+    parts.push(line(-aWest, y - RAIL_OFFSET, aEast, y - RAIL_OFFSET, "rail"));
+    parts.push(line(-aWest, y + RAIL_OFFSET, aEast, y + RAIL_OFFSET, "rail"));
     const x = sign * SLOT_Y;
-    parts.push(line(x - RAIL_OFFSET, -half, x - RAIL_OFFSET, half, "rail"));
-    parts.push(line(x + RAIL_OFFSET, -half, x + RAIL_OFFSET, half, "rail"));
+    parts.push(line(x - RAIL_OFFSET, -bNorth, x - RAIL_OFFSET, bSouth, "rail"));
+    parts.push(line(x + RAIL_OFFSET, -bNorth, x + RAIL_OFFSET, bSouth, "rail"));
   }
 
   // Slots — each slot is broken at the two points where a perpendicular slot
@@ -97,53 +128,53 @@ function renderFlat(half: number): SVGElement[] {
   const g = SLOT_GAP / 2;
   for (const sign of [-1, 1] as const) {
     const y = sign * SLOT_Y;
-    parts.push(line(-half, y, -SLOT_Y - g, y, "slot"));
+    parts.push(line(-aWest, y, -SLOT_Y - g, y, "slot"));
     parts.push(line(-SLOT_Y + g, y, SLOT_Y - g, y, "slot"));
-    parts.push(line(SLOT_Y + g, y, half, y, "slot"));
+    parts.push(line(SLOT_Y + g, y, aEast, y, "slot"));
   }
   for (const sign of [-1, 1] as const) {
     const x = sign * SLOT_Y;
-    parts.push(line(x, -half, x, -SLOT_Y - g, "slot"));
+    parts.push(line(x, -bNorth, x, -SLOT_Y - g, "slot"));
     parts.push(line(x, -SLOT_Y + g, x, SLOT_Y - g, "slot"));
-    parts.push(line(x, SLOT_Y + g, x, half, "slot"));
+    parts.push(line(x, SLOT_Y + g, x, bSouth, "slot"));
   }
 
   return parts;
 }
 
-function horizontalSegment(half: number): SVGElement[] {
-  const len = half * 2;
-  const body = rect(-half, -W / 2, len, W, "body");
-  const borderTop = line(-half, -BORDER_CENTRE, half, -BORDER_CENTRE, "border", BORDER);
-  const borderBot = line(-half, BORDER_CENTRE, half, BORDER_CENTRE, "border", BORDER);
-  const slotTop = line(-half, -SLOT_Y, half, -SLOT_Y, "slot");
-  const slotBot = line(-half, SLOT_Y, half, SLOT_Y, "slot");
-  const railTopOuter = line(-half, -SLOT_Y - RAIL_OFFSET, half, -SLOT_Y - RAIL_OFFSET, "rail");
-  const railTopInner = line(-half, -SLOT_Y + RAIL_OFFSET, half, -SLOT_Y + RAIL_OFFSET, "rail");
-  const railBotOuter = line(-half, SLOT_Y + RAIL_OFFSET, half, SLOT_Y + RAIL_OFFSET, "rail");
-  const railBotInner = line(-half, SLOT_Y - RAIL_OFFSET, half, SLOT_Y - RAIL_OFFSET, "rail");
+function horizontalSegment(geom: CrossoverGeometry): SVGElement[] {
+  const { aWest, aEast } = geom;
+  const body = rect(-aWest, -W / 2, aWest + aEast, W, "body");
+  const borderTop = line(-aWest, -BORDER_CENTRE, aEast, -BORDER_CENTRE, "border", BORDER);
+  const borderBot = line(-aWest, BORDER_CENTRE, aEast, BORDER_CENTRE, "border", BORDER);
+  const slotTop = line(-aWest, -SLOT_Y, aEast, -SLOT_Y, "slot");
+  const slotBot = line(-aWest, SLOT_Y, aEast, SLOT_Y, "slot");
+  const railTopOuter = line(-aWest, -SLOT_Y - RAIL_OFFSET, aEast, -SLOT_Y - RAIL_OFFSET, "rail");
+  const railTopInner = line(-aWest, -SLOT_Y + RAIL_OFFSET, aEast, -SLOT_Y + RAIL_OFFSET, "rail");
+  const railBotOuter = line(-aWest, SLOT_Y + RAIL_OFFSET, aEast, SLOT_Y + RAIL_OFFSET, "rail");
+  const railBotInner = line(-aWest, SLOT_Y - RAIL_OFFSET, aEast, SLOT_Y - RAIL_OFFSET, "rail");
   return [body, borderTop, borderBot, railTopOuter, railTopInner, railBotOuter, railBotInner, slotTop, slotBot];
 }
 
-function verticalSegment(half: number): SVGElement[] {
-  const len = half * 2;
-  const body = rect(-W / 2, -half, W, len, "body");
-  const borderLeft = line(-BORDER_CENTRE, -half, -BORDER_CENTRE, half, "border", BORDER);
-  const borderRight = line(BORDER_CENTRE, -half, BORDER_CENTRE, half, "border", BORDER);
-  const slotLeft = line(-SLOT_Y, -half, -SLOT_Y, half, "slot");
-  const slotRight = line(SLOT_Y, -half, SLOT_Y, half, "slot");
-  const railLeftOuter = line(-SLOT_Y - RAIL_OFFSET, -half, -SLOT_Y - RAIL_OFFSET, half, "rail");
-  const railLeftInner = line(-SLOT_Y + RAIL_OFFSET, -half, -SLOT_Y + RAIL_OFFSET, half, "rail");
-  const railRightOuter = line(SLOT_Y + RAIL_OFFSET, -half, SLOT_Y + RAIL_OFFSET, half, "rail");
-  const railRightInner = line(SLOT_Y - RAIL_OFFSET, -half, SLOT_Y - RAIL_OFFSET, half, "rail");
+function verticalSegment(geom: CrossoverGeometry): SVGElement[] {
+  const { bNorth, bSouth } = geom;
+  const body = rect(-W / 2, -bNorth, W, bNorth + bSouth, "body");
+  const borderLeft = line(-BORDER_CENTRE, -bNorth, -BORDER_CENTRE, bSouth, "border", BORDER);
+  const borderRight = line(BORDER_CENTRE, -bNorth, BORDER_CENTRE, bSouth, "border", BORDER);
+  const slotLeft = line(-SLOT_Y, -bNorth, -SLOT_Y, bSouth, "slot");
+  const slotRight = line(SLOT_Y, -bNorth, SLOT_Y, bSouth, "slot");
+  const railLeftOuter = line(-SLOT_Y - RAIL_OFFSET, -bNorth, -SLOT_Y - RAIL_OFFSET, bSouth, "rail");
+  const railLeftInner = line(-SLOT_Y + RAIL_OFFSET, -bNorth, -SLOT_Y + RAIL_OFFSET, bSouth, "rail");
+  const railRightOuter = line(SLOT_Y + RAIL_OFFSET, -bNorth, SLOT_Y + RAIL_OFFSET, bSouth, "rail");
+  const railRightInner = line(SLOT_Y - RAIL_OFFSET, -bNorth, SLOT_Y - RAIL_OFFSET, bSouth, "rail");
   return [body, borderLeft, borderRight, railLeftOuter, railLeftInner, railRightOuter, railRightInner, slotLeft, slotRight];
 }
 
-function verticalShadow(half: number): SVGElement {
+function verticalShadow(geom: CrossoverGeometry): SVGElement {
   // Drop-shadow rect drawn before segment B's body; offset down-right so the
   // visible portion forms an L underneath/beside B and signals elevation.
   const offset = 4;
-  return rect(-W / 2 + offset, -half + offset, W, half * 2, "shadow");
+  return rect(-W / 2 + offset, -geom.bNorth + offset, W, geom.bNorth + geom.bSouth, "shadow");
 }
 
 function rect(x: number, y: number, w: number, h: number, cls: string): SVGRectElement {
@@ -167,7 +198,7 @@ function line(x1: number, y1: number, x2: number, y2: number, cls: string, width
   return l;
 }
 
-// C8295 Elevated Crossover — two 262 mm straights (= C8222 half + C8200 quarter)
+// C8295 Elevated Crossover — symmetric, two 262 mm straights (= C8222 + C8200)
 // crossing at 90° at their midpoints, with segment B elevated over segment A.
 export const c8295: PieceDef = makeCrossover({
   id: "c8295-elevated-crossover",
@@ -176,12 +207,14 @@ export const c8295: PieceDef = makeCrossover({
   elevated: true,
 });
 
-// C8210 Straight Crossover — two 409 mm straights crossing at 90° at the same
-// level. Segment length is the user's initial estimate (350 mm standard + 59 mm
-// crossover extension); refine if a different split lands later.
+// C8210 Straight Crossover — asymmetric: each segment is 409 mm total, split
+// into a 350 mm standard portion and a 59 mm extension that overlaps the
+// perpendicular segment. A's standard runs west of the crossing; B's standard
+// runs south. The two standard portions meet at their (short) edges at the
+// crossing corner, with the extensions providing the overlap zone.
 export const c8210: PieceDef = makeCrossover({
   id: "c8210-straight-crossover",
   name: "C8210 Straight Crossover",
-  segmentLength: 409,
+  geometry: { aWest: 350, aEast: 59, bNorth: 59, bSouth: 350 },
   elevated: false,
 });
