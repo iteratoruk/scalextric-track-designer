@@ -15,7 +15,8 @@ for the full plan):
 | Code  | Piece                 | Notes                                            |
 | ----- | --------------------- | ------------------------------------------------ |
 | C8205 | Standard Straight     | 350 × 155 mm                                     |
-| C8202 | R1 Curve (45°)        | Outer R 214 mm, inner R 59 mm, centre-line 136.5 mm |
+| C8202 | R1 Curve (45°)        | Outer R 214 mm, inner R 59 mm, centre-line 136.5 mm  |
+| C8278 | R1 Half Curve (22.5°) | Same radii as C8202; 8 pieces make a 180° hairpin    |
 | C8206 | R2 Curve (45°)        | Outer R 370 mm, inner R 215 mm, centre-line 292.5 mm |
 | C8234 | R2 Half Curve (22.5°) | Same radii as C8206; 8 pieces make a 180° hairpin    |
 
