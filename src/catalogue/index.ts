@@ -1,8 +1,8 @@
 import type { PieceDef } from "../types";
 import { straight } from "./straight";
-import { c8202, c8206 } from "./curve";
+import { c8202, c8206, c8234 } from "./curve";
 
-export const catalogue: PieceDef[] = [straight, c8202, c8206];
+export const catalogue: PieceDef[] = [straight, c8202, c8206, c8234];
 
 const byId = new Map(catalogue.map((p) => [p.id, p]));
 

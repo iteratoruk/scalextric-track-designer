@@ -104,3 +104,11 @@ export const c8206: PieceDef = makeCurve({
   centreRadius: 292.5,
   angleDeg: 45,
 });
+
+// R2 half-angle: 8 pieces make a 180° hairpin.
+export const c8234: PieceDef = makeCurve({
+  id: "c8234-r2-half-curve",
+  name: "C8234 R2 Half Curve (22.5°)",
+  centreRadius: 292.5,
+  angleDeg: 22.5,
+});
