@@ -1,0 +1,152 @@
+:root {
+  --bg: #1e2228;
+  --panel: #262b33;
+  --panel-2: #2f353f;
+  --line: #3a414d;
+  --text: #e6e8ec;
+  --muted: #9aa3b2;
+  --accent: #4aa8ff;
+  --danger: #ff6b6b;
+  --room: #f5f3ea;
+  --grid: #e2dfd2;
+  --select: #ff8a00;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app { height: 100%; margin: 0; }
+
+body {
+  font: 14px/1.4 system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+#app {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: 48px 1fr 24px;
+  grid-template-areas:
+    "toolbar toolbar"
+    "palette canvas"
+    "status status";
+}
+
+#toolbar {
+  grid-area: toolbar;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+#toolbar h1 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 16px 0 0;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+#toolbar button {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font: inherit;
+}
+#toolbar button:hover { border-color: var(--accent); }
+#toolbar .spacer { flex: 1; }
+
+#palette {
+  grid-area: palette;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  padding: 12px;
+  overflow-y: auto;
+}
+
+#palette h2 {
+  font-size: 11px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.palette-item {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 8px;
+  cursor: grab;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.palette-item:active { cursor: grabbing; }
+.palette-item:hover { border-color: var(--accent); }
+.palette-item svg { display: block; }
+.palette-item .label { font-size: 12px; color: var(--muted); }
+
+#canvas-host {
+  grid-area: canvas;
+  position: relative;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+#canvas-host svg.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+  background: var(--bg);
+}
+
+#canvas-host svg.canvas.panning { cursor: grabbing; }
+
+.room {
+  fill: var(--room);
+  stroke: var(--line);
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.grid line { stroke: var(--grid); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.grid line.major { stroke: #cfcbb8; }
+
+.piece { cursor: pointer; }
+.piece .body { fill: #2c2c2c; stroke: #444; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.piece .border { stroke: #e8e2d0; fill: none; stroke-linecap: butt; }
+.piece .slot { stroke: #0a0a0a; stroke-width: 3; fill: none; stroke-linecap: butt; }
+.piece .rail { stroke: #b4b4b4; stroke-width: 3; fill: none; stroke-linecap: butt; }
+.piece.selected .body { stroke: var(--select); stroke-width: 3; vector-effect: non-scaling-stroke; }
+
+.free-connector { fill: rgba(255, 255, 255, 0.9); stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; }
+
+.rotation-handle circle { fill: var(--panel); stroke: var(--accent); stroke-width: 3; cursor: pointer; vector-effect: non-scaling-stroke; }
+.rotation-handle:hover circle { fill: var(--accent); }
+.rotation-handle text { fill: var(--accent); pointer-events: none; font-weight: 700; user-select: none; }
+.rotation-handle:hover text { fill: #fff; }
+
+#statusbar {
+  grid-area: status;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
