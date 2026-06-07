@@ -24,7 +24,7 @@ for the full plan):
 | C8202 | R1 Curve (45°)        | Outer R 214 mm, inner R 59 mm, centre-line 136.5 mm  |
 | C8278 | R1 Half Curve (22.5°) | Same radii as C8202; 8 pieces make a 180° hairpin    |
 | C8201 | R1 Hairpin (90°)      | R1 radius, narrow slot spacing; 2 pieces = 180°; enter/exit via C8246 sideswipes |
-| C8210 | Straight Crossover    | Two 409 mm straights at 90°, flat; slots break at the crossing; 4 connectors |
+| C8210 | Straight Crossover    | Two 409 mm straights at 90°, asymmetric `+`; crossing 136.5 mm from one end of each, 272.5 mm from the other; 4 connectors |
 | C8295 | Elevated Crossover    | Two 262 mm straights at 90°, one elevated; 4 connectors |
 | C8206 | R2 Curve (45°)        | Outer R 370 mm, inner R 215 mm, centre-line 292.5 mm |
 | C8234 | R2 Half Curve (22.5°) | Same radii as C8206; 8 pieces make a 180° hairpin    |
