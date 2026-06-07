@@ -6,7 +6,7 @@ A browser-based track designer for Scalextric Sport slot-car layouts. Drag
 pieces from the palette onto a to-scale canvas, snap them together to form a
 circuit, save your design to browser storage, and export it as a PNG.
 
-**Live demo:** <https://iteratoruk.github.io/scalextric-track-designer/> (also reachable at <http://iterator.co.uk/scalextric-track-designer/>)
+**Live demo:** <https://iteratoruk.github.io/scalextric-track-designer/>
 
 The app is a static single-page application deployed to GitHub Pages.
 
