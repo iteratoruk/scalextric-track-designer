@@ -114,7 +114,11 @@ body {
   background: var(--bg);
 }
 
-#canvas-host svg.canvas.panning { cursor: grabbing; }
+/* Pan cursor — applied to every element so .piece's cursor: pointer can't
+ * win over it while Space is held. !important is the simplest way; the rules
+ * only apply when the body carries the class. */
+body.pan-ready, body.pan-ready * { cursor: grab !important; }
+body.pan-ready.pan-active, body.pan-ready.pan-active * { cursor: grabbing !important; }
 
 .room {
   fill: var(--room);

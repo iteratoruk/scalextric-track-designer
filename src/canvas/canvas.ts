@@ -134,7 +134,7 @@ function attachEvents() {
         startScreen: { x: ev.clientX, y: ev.clientY },
         startView: { x: view.x, y: view.y },
       };
-      svg.classList.add("panning");
+      document.body.classList.add("pan-active");
       svg.setPointerCapture(ev.pointerId);
       return;
     }
@@ -162,9 +162,17 @@ function attachEvents() {
 
   svg.addEventListener("pointermove", (ev) => {
     if (panState) {
+      // Convert screen-pixel delta to world-unit delta using the same
+      // letterbox-aware scale as pointerToWorld, so the cursor stays under
+      // the same world point as the user drags.
       const rect = svg.getBoundingClientRect();
-      const dx = ((ev.clientX - panState.startScreen.x) * view.w) / rect.width;
-      const dy = ((ev.clientY - panState.startScreen.y) * view.h) / rect.height;
+      const vbAspect = view.w / view.h;
+      const elAspect = rect.width / rect.height;
+      const pxPerWorld = elAspect > vbAspect
+        ? rect.height / view.h
+        : rect.width / view.w;
+      const dx = (ev.clientX - panState.startScreen.x) / pxPerWorld;
+      const dy = (ev.clientY - panState.startScreen.y) / pxPerWorld;
       view.x = panState.startView.x - dx;
       view.y = panState.startView.y - dy;
       setViewBox();
@@ -186,7 +194,7 @@ function attachEvents() {
   svg.addEventListener("pointerup", (ev) => {
     if (panState) {
       panState = null;
-      svg.classList.remove("panning");
+      document.body.classList.remove("pan-active");
       svg.releasePointerCapture(ev.pointerId);
       return;
     }
@@ -240,16 +248,42 @@ function attachEvents() {
     select(piece.uid);
   });
 
+  // Capture-phase Space handling so a focused toolbar button can't activate
+  // before we preventDefault, and so the body cursor flip is immediate.
+  window.addEventListener(
+    "keydown",
+    (ev) => {
+      const tag = (ev.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (ev.code === "Space") {
+        spaceDown = true;
+        document.body.classList.add("pan-ready");
+        ev.preventDefault();
+      }
+    },
+    { capture: true },
+  );
+  window.addEventListener(
+    "keyup",
+    (ev) => {
+      if (ev.code === "Space") {
+        spaceDown = false;
+        document.body.classList.remove("pan-ready");
+      }
+    },
+    { capture: true },
+  );
+  // If focus leaves the window mid-pan (alt-tab, dialog) the keyup may never
+  // fire — clear armed state so it doesn't get stuck.
+  window.addEventListener("blur", () => {
+    spaceDown = false;
+    document.body.classList.remove("pan-ready");
+    document.body.classList.remove("pan-active");
+  });
+
   window.addEventListener("keydown", (ev) => {
     const tag = (ev.target as HTMLElement | null)?.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA") return;
-
-    if (ev.code === "Space") {
-      spaceDown = true;
-      svg.style.cursor = "grab";
-      ev.preventDefault();
-      return;
-    }
 
     const { selectedUid } = getState();
     if (!selectedUid) return;
@@ -260,12 +294,6 @@ function attachEvents() {
     } else if (ev.key === "r" || ev.key === "R") {
       ev.preventDefault();
       rotateSelected(ev.shiftKey ? -1 : +1);
-    }
-  });
-  window.addEventListener("keyup", (ev) => {
-    if (ev.code === "Space") {
-      spaceDown = false;
-      svg.style.cursor = "";
     }
   });
 }

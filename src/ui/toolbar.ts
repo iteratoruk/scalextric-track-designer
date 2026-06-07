@@ -61,6 +61,9 @@ export function mountToolbar(el: HTMLElement) {
 function makeButton(label: string, onClick: () => void): HTMLButtonElement {
   const b = document.createElement("button");
   b.textContent = label;
+  // Prevent the button from grabbing focus on click so Space afterwards arms
+  // pan rather than re-firing the button's action.
+  b.addEventListener("mousedown", (ev) => ev.preventDefault());
   b.addEventListener("click", onClick);
   return b;
 }
