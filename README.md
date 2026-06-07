@@ -9,12 +9,18 @@ Pages.
 
 ## Status
 
-Initial cut. The catalogue currently contains two pieces:
+Catalogue progress (see issue [#1](https://github.com/iteratoruk/scalextric-track-designer/issues/1)
+for the full plan):
 
 | Code  | Piece                 | Notes                                            |
 | ----- | --------------------- | ------------------------------------------------ |
 | C8205 | Standard Straight     | 350 × 155 mm                                     |
-| C8206 | R2 Curve (45°)        | Outer R 370 mm, inner R 215 mm, width 155 mm     |
+| C8202 | R1 Curve (45°)        | Outer R 214 mm, inner R 59 mm, centre-line 136.5 mm |
+| C8206 | R2 Curve (45°)        | Outer R 370 mm, inner R 215 mm, centre-line 292.5 mm |
+
+All curves are rendered through a shared `makeCurve()` factory in
+[`src/catalogue/curve.ts`](src/catalogue/curve.ts), so additional radii and
+half-angle variants land as a single call site each.
 
 ## Features (so far)
 
