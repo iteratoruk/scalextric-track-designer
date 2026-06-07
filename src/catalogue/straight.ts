@@ -87,6 +87,13 @@ export const c8205: PieceDef = makeStraight({
   length: 350,
 });
 
+// C8505 Extra Long Straight — 584 mm (= 1 × C8205 + 3 × C8236).
+export const c8505: PieceDef = makeStraight({
+  id: "c8505-extra-long-straight",
+  name: "C8505 Extra Long Straight",
+  length: 584,
+});
+
 // C8222 Half Straight — 175 mm (= 1/2 of C8205).
 export const c8222: PieceDef = makeStraight({
   id: "c8222-half-straight",

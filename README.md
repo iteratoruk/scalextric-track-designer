@@ -14,6 +14,7 @@ for the full plan):
 
 | Code  | Piece                 | Notes                                            |
 | ----- | --------------------- | ------------------------------------------------ |
+| C8505 | Extra Long Straight   | 584 × 155 mm (= 1 × C8205 + 3 × C8236)               |
 | C8205 | Standard Straight     | 350 × 155 mm                                         |
 | C8222 | Half Straight         | 175 × 155 mm                                         |
 | C8200 | Quarter Straight      | 87 × 155 mm                                          |
