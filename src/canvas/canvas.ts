@@ -80,7 +80,7 @@ function render() {
 
   overlayLayer.replaceChildren();
   for (const piece of track.pieces) {
-    for (const idx of [0, 1] as const) {
+    for (let idx = 0; idx < piece.mates.length; idx++) {
       if (piece.mates[idx]) continue;
       const c = worldConnector(piece, idx);
       overlayLayer.appendChild(makeFreeDot(c.pos.x, c.pos.y));
@@ -227,12 +227,13 @@ function attachEvents() {
     const defId = ev.dataTransfer?.getData("application/x-piece");
     if (!defId) return;
     const world = pointerToWorld(ev);
+    const def = getDef(defId);
     const piece: Placed = {
       uid: newUid(),
       defId,
       pos: world,
       rotation: 0,
-      mates: [null, null],
+      mates: new Array(def.connectors.length).fill(null),
     };
     addPiece(piece);
     tryChainSnap([piece.uid]);

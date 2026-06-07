@@ -118,10 +118,10 @@ export function detach(uid: string) {
   if (changed) emit();
 }
 
-export function setMate(uid: string, connectorIdx: 0 | 1, mate: Mate | null) {
+export function setMate(uid: string, connectorIdx: number, mate: Mate | null) {
   const piece = state.track.pieces.find((p) => p.uid === uid);
   if (!piece) return;
-  const newMates: [Mate | null, Mate | null] = [piece.mates[0], piece.mates[1]];
+  const newMates = piece.mates.slice();
   newMates[connectorIdx] = mate;
   piece.mates = newMates;
   emit();

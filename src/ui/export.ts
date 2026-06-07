@@ -12,6 +12,7 @@ const STYLE = `
 .piece .border { stroke: #e8e2d0; fill: none; stroke-linecap: butt; }
 .piece .slot { stroke: #0a0a0a; stroke-width: 3; fill: none; stroke-linecap: butt; }
 .piece .rail { stroke: #b4b4b4; stroke-width: 1.2; fill: none; stroke-linecap: butt; }
+.piece .shadow { fill: rgba(0, 0, 0, 0.35); }
 `;
 
 export function exportPng(filename = "track.png") {

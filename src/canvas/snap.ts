@@ -16,7 +16,7 @@ export function rotate(v: Vec, angleDeg: number): Vec {
   return { x: v.x * ca - v.y * sa, y: v.x * sa + v.y * ca };
 }
 
-export function worldConnector(piece: Placed, idx: 0 | 1): Connector {
+export function worldConnector(piece: Placed, idx: number): Connector {
   const def = getDef(piece.defId);
   const local = def.connectors[idx];
   const r = rotate(local.pos, piece.rotation);
@@ -27,15 +27,15 @@ export function worldConnector(piece: Placed, idx: 0 | 1): Connector {
 }
 
 export type SingleSnap = {
-  movingIdx: 0 | 1;
+  movingIdx: number;
   targetUid: string;
-  targetIdx: 0 | 1;
+  targetIdx: number;
   newPos: Vec;
   newRotation: number;
 };
 
 function shortestAngle(target: number, current: number): number {
-  let d = ((target - current) % 360 + 540) % 360 - 180;
+  const d = ((target - current) % 360 + 540) % 360 - 180;
   return d;
 }
 
@@ -43,12 +43,12 @@ export function findSnap(moving: Placed, others: Placed[]): SingleSnap | null {
   let best: { score: number; res: SingleSnap } | null = null;
   const def = getDef(moving.defId);
 
-  for (const movingIdx of [0, 1] as const) {
+  for (let movingIdx = 0; movingIdx < moving.mates.length; movingIdx++) {
     if (moving.mates[movingIdx]) continue;
     const movingWorld = worldConnector(moving, movingIdx);
 
     for (const other of others) {
-      for (const targetIdx of [0, 1] as const) {
+      for (let targetIdx = 0; targetIdx < other.mates.length; targetIdx++) {
         if (other.mates[targetIdx]) continue;
         const targetWorld = worldConnector(other, targetIdx);
         const dist = Math.hypot(
@@ -83,9 +83,9 @@ export function findSnap(moving: Placed, others: Placed[]): SingleSnap | null {
 
 export type ChainSnap = {
   movingUid: string;
-  movingIdx: 0 | 1;
+  movingIdx: number;
   targetUid: string;
-  targetIdx: 0 | 1;
+  targetIdx: number;
   pivot: Vec;        // world position of the moving connector at snap time
   deltaAngle: number; // degrees to rotate the chain by, around pivot
   translation: Vec;  // additional translation after rotation
@@ -98,12 +98,12 @@ export function findChainSnap(
   let best: { score: number; snap: ChainSnap } | null = null;
 
   for (const moving of insidePieces) {
-    for (const movingIdx of [0, 1] as const) {
+    for (let movingIdx = 0; movingIdx < moving.mates.length; movingIdx++) {
       if (moving.mates[movingIdx]) continue;
       const movingWorld = worldConnector(moving, movingIdx);
 
       for (const other of outsidePieces) {
-        for (const targetIdx of [0, 1] as const) {
+        for (let targetIdx = 0; targetIdx < other.mates.length; targetIdx++) {
           if (other.mates[targetIdx]) continue;
           const targetWorld = worldConnector(other, targetIdx);
           const dist = Math.hypot(

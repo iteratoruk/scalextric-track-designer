@@ -131,6 +131,7 @@ body {
 .piece .border { stroke: #e8e2d0; fill: none; stroke-linecap: butt; }
 .piece .slot { stroke: #0a0a0a; stroke-width: 3; fill: none; stroke-linecap: butt; }
 .piece .rail { stroke: #b4b4b4; stroke-width: 3; fill: none; stroke-linecap: butt; }
+.piece .shadow { fill: rgba(0, 0, 0, 0.35); }
 .piece.selected .body { stroke: var(--select); stroke-width: 3; vector-effect: non-scaling-stroke; }
 
 .free-connector { fill: rgba(255, 255, 255, 0.9); stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; }
