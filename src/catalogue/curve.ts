@@ -4,7 +4,8 @@ const NS = "http://www.w3.org/2000/svg";
 
 const W = 155;            // track width (mm) — matches C8205 standard straight
 const BORDER = 0;         // border strip width (mm); kerbs ship as separate accessories
-const SLOT_Y = 35;        // slot offset from centre line (mm)
+const SLOT_Y = 35;        // standard slot offset from centre line (mm)
+const SLOT_Y_NARROW = 15; // narrow slot offset — used by C8201 hairpin (matches C8246 sideswipe end)
 const RAIL_OFFSET = 2;    // rail offset from each slot (mm)
 
 interface CurveOptions {
@@ -16,10 +17,13 @@ interface CurveOptions {
   angleDeg: number;
   /** Rotation step for the R-key / rotation handles. Defaults to angleDeg. */
   rotateStep?: number;
+  /** Slot offset from centre line, in mm. Defaults to SLOT_Y (standard). */
+  slotY?: number;
 }
 
 export function makeCurve(opts: CurveOptions): PieceDef {
   const { id, name, centreRadius: R, angleDeg } = opts;
+  const slotY = opts.slotY ?? SLOT_Y;
   const ANG = (angleDeg * Math.PI) / 180;
   const Ro = R + W / 2;
   const Ri = R - W / 2;
@@ -71,13 +75,13 @@ export function makeCurve(opts: CurveOptions): PieceDef {
       const borderOuter = arcStroke(Rbo, "border", BORDER);
       const borderInner = arcStroke(Rbi, "border", BORDER);
 
-      const slotOuter = arcStroke(R + SLOT_Y, "slot");
-      const slotInner = arcStroke(R - SLOT_Y, "slot");
+      const slotOuter = arcStroke(R + slotY, "slot");
+      const slotInner = arcStroke(R - slotY, "slot");
 
-      const railOuterFar = arcStroke(R + SLOT_Y + RAIL_OFFSET, "rail");
-      const railOuterNear = arcStroke(R + SLOT_Y - RAIL_OFFSET, "rail");
-      const railInnerFar = arcStroke(R - SLOT_Y - RAIL_OFFSET, "rail");
-      const railInnerNear = arcStroke(R - SLOT_Y + RAIL_OFFSET, "rail");
+      const railOuterFar = arcStroke(R + slotY + RAIL_OFFSET, "rail");
+      const railOuterNear = arcStroke(R + slotY - RAIL_OFFSET, "rail");
+      const railInnerFar = arcStroke(R - slotY - RAIL_OFFSET, "rail");
+      const railInnerNear = arcStroke(R - slotY + RAIL_OFFSET, "rail");
 
       return [
         body,
@@ -135,4 +139,15 @@ export const c8235: PieceDef = makeCurve({
   name: "C8235 R4 Curve (22.5°)",
   centreRadius: 604.5,
   angleDeg: 22.5,
+});
+
+// C8201 R1 Hairpin — R1 radius, 90° per piece (2 pieces = 180° hairpin).
+// Uses the narrow slot configuration; pair with C8246 sideswipes to mate
+// to standard-spaced straights and curves.
+export const c8201: PieceDef = makeCurve({
+  id: "c8201-r1-hairpin",
+  name: "C8201 R1 Hairpin (90°)",
+  centreRadius: 136.5,
+  angleDeg: 90,
+  slotY: SLOT_Y_NARROW,
 });
