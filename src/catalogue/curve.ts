@@ -128,3 +128,11 @@ export const c8204: PieceDef = makeCurve({
   centreRadius: 448.5,
   angleDeg: 22.5,
 });
+
+// R4 outer 682, inner 527, centre-line 604.5 mm. Only ships as a 22.5° half-curve.
+export const c8235: PieceDef = makeCurve({
+  id: "c8235-r4-curve",
+  name: "C8235 R4 Curve (22.5°)",
+  centreRadius: 604.5,
+  angleDeg: 22.5,
+});
