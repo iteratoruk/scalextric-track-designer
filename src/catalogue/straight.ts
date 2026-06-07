@@ -86,9 +86,16 @@ export const c8222: PieceDef = makeStraight({
   length: 175,
 });
 
-// C8200 Quarter Straight — 87.5 mm (= 1/4 of C8205).
+// C8200 Quarter Straight — 87 mm.
 export const c8200: PieceDef = makeStraight({
   id: "c8200-quarter-straight",
   name: "C8200 Quarter Straight",
-  length: 87.5,
+  length: 87,
+});
+
+// C8236 Short Straight — 78 mm.
+export const c8236: PieceDef = makeStraight({
+  id: "c8236-short-straight",
+  name: "C8236 Short Straight",
+  length: 78,
 });

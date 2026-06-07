@@ -16,7 +16,8 @@ for the full plan):
 | ----- | --------------------- | ------------------------------------------------ |
 | C8205 | Standard Straight     | 350 × 155 mm                                         |
 | C8222 | Half Straight         | 175 × 155 mm                                         |
-| C8200 | Quarter Straight      | 87.5 × 155 mm                                        |
+| C8200 | Quarter Straight      | 87 × 155 mm                                          |
+| C8236 | Short Straight        | 78 × 155 mm                                          |
 | C8202 | R1 Curve (45°)        | Outer R 214 mm, inner R 59 mm, centre-line 136.5 mm  |
 | C8278 | R1 Half Curve (22.5°) | Same radii as C8202; 8 pieces make a 180° hairpin    |
 | C8206 | R2 Curve (45°)        | Outer R 370 mm, inner R 215 mm, centre-line 292.5 mm |
