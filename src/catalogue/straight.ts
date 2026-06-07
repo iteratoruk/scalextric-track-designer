@@ -4,7 +4,8 @@ const NS = "http://www.w3.org/2000/svg";
 
 const W = 155;            // track width (mm) — matches every other piece
 const BORDER = 0;
-const SLOT_Y = 35;
+const SLOT_Y = 35;        // standard slot offset from centre (mm)
+const SLOT_Y_NARROW = 15; // narrow slot offset, used by C8246 sideswipes / C8201 hairpin
 const RAIL_OFFSET = 2;
 
 const BORDER_CENTRE = W / 2 - BORDER / 2;
@@ -16,10 +17,17 @@ interface StraightOptions {
   length: number;
   /** Rotation step for the R-key / rotation handles. Defaults to 90°. */
   rotateStep?: number;
+  /** Absolute slot offset from centre at the conn0 (x=0) end. Defaults to SLOT_Y. */
+  slotYStart?: number;
+  /** Absolute slot offset from centre at the conn1 (x=length) end. Defaults to SLOT_Y. */
+  slotYEnd?: number;
 }
 
 export function makeStraight(opts: StraightOptions): PieceDef {
   const { id, name, length: LEN } = opts;
+  const slotYStart = opts.slotYStart ?? SLOT_Y;
+  const slotYEnd = opts.slotYEnd ?? SLOT_Y;
+
   const conn0: Connector = { pos: { x: 0, y: 0 }, angle: 180 };
   const conn1: Connector = { pos: { x: LEN, y: 0 }, angle: 0 };
 
@@ -40,13 +48,13 @@ export function makeStraight(opts: StraightOptions): PieceDef {
       const borderTop = strokeLine(0, -BORDER_CENTRE, LEN, -BORDER_CENTRE, "border", BORDER);
       const borderBot = strokeLine(0, BORDER_CENTRE, LEN, BORDER_CENTRE, "border", BORDER);
 
-      const slotTop = strokeLine(0, -SLOT_Y, LEN, -SLOT_Y, "slot");
-      const slotBot = strokeLine(0, SLOT_Y, LEN, SLOT_Y, "slot");
+      const slotTop = strokeLine(0, -slotYStart, LEN, -slotYEnd, "slot");
+      const slotBot = strokeLine(0, slotYStart, LEN, slotYEnd, "slot");
 
-      const railTopOuter = strokeLine(0, -SLOT_Y - RAIL_OFFSET, LEN, -SLOT_Y - RAIL_OFFSET, "rail");
-      const railTopInner = strokeLine(0, -SLOT_Y + RAIL_OFFSET, LEN, -SLOT_Y + RAIL_OFFSET, "rail");
-      const railBotOuter = strokeLine(0, SLOT_Y + RAIL_OFFSET, LEN, SLOT_Y + RAIL_OFFSET, "rail");
-      const railBotInner = strokeLine(0, SLOT_Y - RAIL_OFFSET, LEN, SLOT_Y - RAIL_OFFSET, "rail");
+      const railTopOuter = strokeLine(0, -slotYStart - RAIL_OFFSET, LEN, -slotYEnd - RAIL_OFFSET, "rail");
+      const railTopInner = strokeLine(0, -slotYStart + RAIL_OFFSET, LEN, -slotYEnd + RAIL_OFFSET, "rail");
+      const railBotOuter = strokeLine(0, slotYStart + RAIL_OFFSET, LEN, slotYEnd + RAIL_OFFSET, "rail");
+      const railBotInner = strokeLine(0, slotYStart - RAIL_OFFSET, LEN, slotYEnd - RAIL_OFFSET, "rail");
 
       return [
         body,
@@ -98,4 +106,22 @@ export const c8236: PieceDef = makeStraight({
   id: "c8236-short-straight",
   name: "C8236 Short Straight",
   length: 78,
+});
+
+// C8246 Sideswipe (narrowing) — standard length, slots taper from standard
+// spacing on conn0 to narrow spacing on conn1. Pairs with the expanding
+// variant to enter/exit the C8201 hairpin's narrow-slot configuration.
+export const c8246Narrow: PieceDef = makeStraight({
+  id: "c8246-sideswipe-narrowing",
+  name: "C8246 Sideswipe (narrowing)",
+  length: 350,
+  slotYEnd: SLOT_Y_NARROW,
+});
+
+// C8246 Sideswipe (expanding) — mirror of the narrowing variant.
+export const c8246Expand: PieceDef = makeStraight({
+  id: "c8246-sideswipe-expanding",
+  name: "C8246 Sideswipe (expanding)",
+  length: 350,
+  slotYStart: SLOT_Y_NARROW,
 });
