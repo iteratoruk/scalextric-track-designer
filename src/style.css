@@ -139,6 +139,7 @@ body.pan-ready.pan-active, body.pan-ready.pan-active * { cursor: grabbing !impor
 .piece .kerb-apron { fill: #c8aa66; stroke: #6b5a2e; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .piece .kerb-rumble-red { fill: #cf3a2c; stroke: none; }
 .piece .kerb-rumble-white { fill: #f2ede0; stroke: none; }
+.piece .kerb-guide { stroke: #6b5a2e; stroke-width: 1; fill: none; opacity: 0.5; vector-effect: non-scaling-stroke; }
 .piece.selected .body, .piece.selected .kerb-apron { stroke: var(--select); stroke-width: 3; vector-effect: non-scaling-stroke; }
 
 .free-connector { fill: rgba(255, 255, 255, 0.9); stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; }

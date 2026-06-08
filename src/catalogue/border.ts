@@ -83,6 +83,78 @@ export function makeBorder(opts: BorderOptions): PieceDef {
   };
 }
 
+interface InnerBorderOptions {
+  id: string;
+  name: string;
+  /** Centre-line radius of the host curve in mm. The border's outer edge lands
+   *  on the host's inner edge, centreRadius − W/2. */
+  centreRadius: number;
+  /** Arc angle in degrees. */
+  angleDeg: number;
+  /** Radial width of the band in mm (same as the outer borders). */
+  width: number;
+  /** Def-ids of the curves this border clips onto (their inner edge). */
+  borderFor: string[];
+}
+
+/** An inner-edge border. Built in the SAME local frame as the matching curve
+ *  (centre of curvature at (0, centreRadius)), so it shares its host's
+ *  pos/rotation and `findBorderSnap` places it concentrically — same as the
+ *  outer borders, just rendered on the inside. It's the same radial width as
+ *  the outer borders, hugging the inner track edge (it does NOT fill to the
+ *  centre); the tight inner radius just leaves no room for a kerb, so it's a
+ *  plain sand band — no rumble strip — scored at 22.5° break guides. */
+export function makeInnerBorder(opts: InnerBorderOptions): PieceDef {
+  const { id, name, centreRadius: R, angleDeg, width, borderFor } = opts;
+  const ANG = (angleDeg * Math.PI) / 180;
+  const Rout = R - W / 2; // host inner edge — track side of the band
+  const Rin = Rout - width; // inner edge of the band (toward the centre)
+  const sin = Math.sin(ANG);
+  const cos = Math.cos(ANG);
+
+  return {
+    id,
+    name,
+    connectors: [],
+    rotateStep: angleDeg,
+    arc: { centreRadius: R, angleDeg },
+    borderFor,
+    bbox: { x: 0, y: R - Rout, w: Rout * sin, h: (R - Rin * cos) - (R - Rout) },
+    render() {
+      const pt = (r: number, a: number) =>
+        `${r * Math.sin(a)} ${R - r * Math.cos(a)}`;
+
+      // Annular sand band hugging the inner track edge — same width as the
+      // outer borders, but no kerb (no room on a tight inner radius).
+      const band = document.createElementNS(NS, "path");
+      band.setAttribute(
+        "d",
+        [
+          `M ${pt(Rin, 0)}`,
+          `A ${Rin} ${Rin} 0 0 1 ${pt(Rin, ANG)}`,
+          `L ${pt(Rout, ANG)}`,
+          `A ${Rout} ${Rout} 0 0 0 ${pt(Rout, 0)}`,
+          `Z`,
+        ].join(" "),
+      );
+      band.setAttribute("class", "kerb-apron");
+
+      // Score lines at 22.5° intervals — where the physical piece breaks apart.
+      const guides = [];
+      const GUIDE_DEG = 22.5;
+      for (let a = GUIDE_DEG; a < angleDeg - 1e-6; a += GUIDE_DEG) {
+        const rad = (a * Math.PI) / 180;
+        const g = document.createElementNS(NS, "path");
+        g.setAttribute("d", `M ${pt(Rin, rad)} L ${pt(Rout, rad)}`);
+        g.setAttribute("class", "kerb-guide");
+        guides.push(g);
+      }
+
+      return [band, ...guides];
+    },
+  };
+}
+
 // C8240 R1 Outer Borders — 45° kerb on the outside of any R1 curve (outer edge
 // 214 mm). Ships 4 per pack; here as one placeable 45° section. Fits the C8202
 // 45° curve (one section) and the C8201 90° hairpin (two sections, side by side).
@@ -142,4 +214,18 @@ export const c8238: PieceDef = makeBorder({
   angleDeg: 22.5,
   width: 40,
   borderFor: ["c8235-r4-curve"],
+});
+
+// C8279 R1 Inner Border, Kerb & Barrier — sits inside an R1 bend. The real
+// piece is a 180° hairpin filler, scored at 22.5° so it snaps apart into up to
+// 8 sections; modelled here as the practical 45° section (no 22.5° standard R1
+// corner), mirroring the C8240 outer section. Same 40 mm width as the other
+// borders, hugging the inner edge — just no kerb (no room on a tight radius).
+export const c8279: PieceDef = makeInnerBorder({
+  id: "c8279-r1-inner-border",
+  name: "C8279 R1 Inner Border (45°)",
+  centreRadius: 136.5,
+  angleDeg: 45,
+  width: 40,
+  borderFor: ["c8202-r1-curve", "c8278-r1-half-curve", "c8201-r1-hairpin"],
 });

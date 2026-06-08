@@ -39,6 +39,7 @@ for the full plan):
 | C8239 | R2 Outer Border (22.5°) | The 22.5° half-section for R2 bends built from C8234 half-curves; same R2 outer edge (370 mm) and 40 mm width as C8228; subdivides longer hosts into more slots; ships 4 per pack |
 | C8224 | R3 Outer Border (22.5°) | Kerb on the outside of the R3 curve (C8204); inner R 526 mm, 40 mm wide; joined C8204s merge into one host arc; ships 4 per pack |
 | C8238 | R4 Outer Border (22.5°) | Kerb on the outside of the R4 curve (C8235); inner R 682 mm, 40 mm wide; joined C8235s merge into one host arc; ships 4 per pack |
+| C8279 | R1 Inner Border (45°) | 40 mm sand band hugging the **inside** edge of an R1 bend (C8202 / C8278 / C8201); no rumble strip; the real 180° piece is scored at 22.5°, modelled here as the practical 45° section; ships 2 per pack |
 
 All curves are rendered through a shared `makeCurve()` factory in
 [`src/catalogue/curve.ts`](src/catalogue/curve.ts), so additional radii and
@@ -53,6 +54,11 @@ Curves sharing a centre of curvature (joined smoothly) merge into one host arc,
 so a border can span several pieces — e.g. two C8234 half-curves — and a host
 arc longer than the border offers several section-sized slots, so two borders
 wrap a 90° curve end to end. Double-click a border to peel it off.
+
+Inner borders (C8279, via the `makeInnerBorder` factory) snap with the same
+concentric logic but render on the *inside* of the bend — a sand band of the
+same width as the outer borders, hugging the inner track edge, with no rumble
+strip (no room on a tight inner radius) and 22.5° break-guide lines.
 
 ## Features (so far)
 

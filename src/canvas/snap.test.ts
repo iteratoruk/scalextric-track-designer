@@ -388,3 +388,52 @@ describe("C8238 R4 outer border (22.5°)", () => {
     expect(snap!.pos.y).toBeCloseTo(600);
   });
 });
+
+describe("C8279 R1 inner border (45° section)", () => {
+  const border = (overrides: Partial<Placed> = {}): Placed => ({
+    uid: "b1",
+    defId: "c8279-r1-inner-border",
+    pos: { x: 0, y: 0 },
+    rotation: 0,
+    mates: [],
+    ...overrides,
+  });
+
+  test("def: no connectors, R1 arc, fits R1 curve/half/hairpin", () => {
+    const def = getDef("c8279-r1-inner-border");
+    expect(def.connectors).toEqual([]);
+    expect(def.arc).toEqual({ centreRadius: 136.5, angleDeg: 45 });
+    expect(def.borderFor).toEqual([
+      "c8202-r1-curve",
+      "c8278-r1-half-curve",
+      "c8201-r1-hairpin",
+    ]);
+  });
+
+  test("snaps concentrically onto a C8202 (shares pos + rotation, inner edge)", () => {
+    // Same concentric placement as the outer border — the render puts it inside.
+    const host: Placed = {
+      uid: "c", defId: "c8202-r1-curve", pos: { x: 400, y: 300 }, rotation: 0, mates: [null, null],
+    };
+    const snap = findBorderSnap(border({ pos: { x: 403, y: 302 } }), [host]);
+    expect(snap).not.toBeNull();
+    expect(snap!.hostUid).toBe("c");
+    expect(snap!.rotation).toBe(0);
+    expect(snap!.pos.x).toBeCloseTo(400);
+    expect(snap!.pos.y).toBeCloseTo(300);
+  });
+
+  test("offers two slots on the C8201 hairpin (90°)", () => {
+    const hp: Placed = {
+      uid: "h", defId: "c8201-r1-hairpin", pos: { x: 0, y: 0 }, rotation: 0, mates: [null, null],
+    };
+    const s0 = findBorderSnap(border({ pos: { x: 2, y: 1 } }), [hp])!;
+    expect(s0.rotation).toBe(0);
+    const SIN45 = Math.sin(Math.PI / 4);
+    const slot1 = { x: 136.5 * SIN45, y: 136.5 - 136.5 * SIN45 };
+    const s1 = findBorderSnap(border({ pos: slot1, rotation: 45 }), [hp])!;
+    expect(s1.rotation).toBe(45);
+    expect(s1.pos.x).toBeCloseTo(slot1.x);
+    expect(s1.pos.y).toBeCloseTo(slot1.y);
+  });
+});

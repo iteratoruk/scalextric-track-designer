@@ -16,6 +16,7 @@ const STYLE = `
 .piece .kerb-apron { fill: #c8aa66; stroke: #6b5a2e; stroke-width: 1; }
 .piece .kerb-rumble-red { fill: #cf3a2c; stroke: none; }
 .piece .kerb-rumble-white { fill: #f2ede0; stroke: none; }
+.piece .kerb-guide { stroke: #6b5a2e; stroke-width: 1; fill: none; opacity: 0.5; }
 `;
 
 export function exportPng(filename = "track.png") {
