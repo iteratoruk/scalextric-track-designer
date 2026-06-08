@@ -109,13 +109,16 @@ the curve def-ids it fits; it's built in the host curve's own local frame, so
 overlaying the two origins lays the kerb exactly on the outer edge. `Placed`
 gains an optional `host` (the curve's uid). On drop/move, `findBorderSnap`
 overlays a nearby border onto a matching host. Hosts expose their `arc`
-(centre-of-curvature radius + sweep), so a host longer than the border offers
-several section-sized slots around its outer edge (each sharing the host's
-centre of curvature, rotated by the slot offset); the border snaps to whichever
-it was dropped nearest. `connectedComponent` then pulls hosted borders along
-when the host is dragged or rotated (one-directional — grabbing the border alone
-just repositions it). C8240 (R1 outer, 45°) is the first such piece: one section
-borders a C8202, two wrap the 90° C8201 hairpin.
+(centre-of-curvature radius + sweep). `findBorderSnap` groups candidate hosts by
+shared centre of curvature, so curves joined into a smooth bend (e.g. two R2
+half-curves) merge into one continuous host arc. Each contiguous run offers
+section-sized slots stepped from every section boundary (so a long single piece
+and a run of short ones both expose every valid placement); the border snaps to
+whichever it was dropped nearest, attaching to the section that holds the slot's
+start. `connectedComponent` then pulls hosted borders along when the host is
+dragged or rotated (one-directional — grabbing the border alone just repositions
+it). C8240 (R1, 45°) and C8228 (R2, 45°) are the first such pieces: one section
+borders a 45° curve, two wrap a 90° curve, and one spans two joined half-curves.
 
 ## Interaction
 

@@ -3,7 +3,7 @@ import { c8200, c8205, c8222, c8236, c8246Expand, c8246Narrow, c8505 } from "./s
 import { c8201, c8202, c8204, c8206, c8234, c8235, c8278 } from "./curve";
 import { c8210, c8295 } from "./crossover";
 import { c8193 } from "./racing-curve";
-import { c8240 } from "./border";
+import { c8228, c8240 } from "./border";
 
 export const catalogue: PieceDef[] = [
   c8505, c8205, c8222, c8200, c8236,
@@ -12,7 +12,7 @@ export const catalogue: PieceDef[] = [
   c8206, c8234, c8204, c8235,
   c8193,
   c8210, c8295,
-  c8240,
+  c8240, c8228,
 ];
 
 const byId = new Map(catalogue.map((p) => [p.id, p]));

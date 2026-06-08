@@ -92,46 +92,103 @@ export type BorderSnap = {
   rotation: number;
 };
 
-/** Find a host piece to clip a border onto. A border carries no connectors; it
- *  snaps concentrically onto any nearby piece whose defId is in the border's
- *  `borderFor` list. A host arc longer than the border (e.g. the 90° C8201
- *  hairpin vs a 45° C8240) offers several section-sized slots around its outer
- *  edge; the border snaps to whichever slot it was dropped nearest. Each slot
- *  shares the host's centre of curvature, rotated by the slot's angular offset,
- *  so the kerb lands exactly on that section of the outer edge. */
+type HostArc = {
+  piece: Placed;
+  cv: Vec; // centre of curvature, world
+  lo: number; // start angle around cv (deg), unwrapped within its group
+  hi: number; // end angle (lo + sweep)
+};
+
+const ANGLE_EPS = 1e-3;
+
+/** Merge angular intervals into maximal contiguous runs (abutting curves form
+ *  one run). Input need not be sorted; returns sorted, merged [lo, hi] runs. */
+function mergeRuns(intervals: Array<[number, number]>): Array<[number, number]> {
+  const sorted = intervals.slice().sort((a, b) => a[0] - b[0]);
+  const runs: Array<[number, number]> = [];
+  for (const [lo, hi] of sorted) {
+    const last = runs[runs.length - 1];
+    if (last && lo <= last[1] + ANGLE_EPS) last[1] = Math.max(last[1], hi);
+    else runs.push([lo, hi]);
+  }
+  return runs;
+}
+
+/** Find a host to clip a border onto. A border carries no connectors; it snaps
+ *  concentrically onto pieces whose defId is in its `borderFor` list. The host
+ *  arc can span several pieces: curves sharing a centre of curvature (joined
+ *  smoothly, e.g. two R2 half-curves) merge into one continuous arc. A run
+ *  longer than the border offers several section-sized slots, anchored at each
+ *  section boundary; the border snaps to whichever slot it was dropped nearest.
+ *  Each slot shares the host centre of curvature, so the kerb lands exactly on
+ *  that section of the outer edge. */
 export function findBorderSnap(border: Placed, others: Placed[]): BorderSnap | null {
   const def = getDef(border.defId);
   if (!def.borderFor || def.borderFor.length === 0 || !def.arc) return null;
   const bAng = def.arc.angleDeg;
   const bR = def.arc.centreRadius;
 
-  let best: { score: number; snap: BorderSnap } | null = null;
+  // Candidate host arcs, keyed by shared centre of curvature.
+  const groups = new Map<string, HostArc[]>();
   for (const other of others) {
     if (!def.borderFor.includes(other.defId)) continue;
     const hostDef = getDef(other.defId);
     if (!hostDef.arc) continue;
-
-    // Host centre of curvature in world (local (0, centreRadius)).
     const hc = rotate({ x: 0, y: hostDef.arc.centreRadius }, other.rotation);
-    const hostCv = { x: other.pos.x + hc.x, y: other.pos.y + hc.y };
+    const cv = { x: other.pos.x + hc.x, y: other.pos.y + hc.y };
+    const lo = (Math.atan2(other.pos.y - cv.y, other.pos.x - cv.x) * 180) / Math.PI;
+    const key = `${Math.round(cv.x * 2)},${Math.round(cv.y * 2)}`;
+    const arc: HostArc = { piece: other, cv, lo, hi: lo + hostDef.arc.angleDeg };
+    const g = groups.get(key);
+    if (g) g.push(arc);
+    else groups.set(key, [arc]);
+  }
 
-    // One slot per border-sized section that fits within the host arc.
-    const EPS = 1e-6;
-    for (let phi = 0; phi + bAng <= hostDef.arc.angleDeg + EPS; phi += bAng) {
-      const rotation = (other.rotation + phi + 720) % 360;
-      const bc = rotate({ x: 0, y: bR }, rotation);
-      const pos = { x: hostCv.x - bc.x, y: hostCv.y - bc.y };
+  let best: { score: number; snap: BorderSnap } | null = null;
+  for (const group of groups.values()) {
+    const cv = group[0].cv;
+    // Unwrap each arc's angle to sit within ±180° of the group reference, so a
+    // run that crosses the atan2 ±180° seam still merges contiguously.
+    const ref = group[0].lo;
+    for (const a of group) {
+      while (a.lo - ref > 180) { a.lo -= 360; a.hi -= 360; }
+      while (a.lo - ref < -180) { a.lo += 360; a.hi += 360; }
+    }
+    const runs = mergeRuns(group.map((a) => [a.lo, a.hi]));
+    const maxHi = Math.max(...runs.map((r) => r[1]));
+    const covered = (lo: number, hi: number) =>
+      runs.some(([rl, rh]) => lo >= rl - ANGLE_EPS && hi <= rh + ANGLE_EPS);
 
-      const dist = Math.hypot(border.pos.x - pos.x, border.pos.y - pos.y);
-      if (dist > BORDER_SNAP_DISTANCE) continue;
+    // Slots step from each section boundary by the border's own arc, so a long
+    // single piece (C8193) and a run of half-curves both expose every valid
+    // placement. Dedup by start angle.
+    const seen = new Set<number>();
+    for (const a of group) {
+      for (let phi = a.lo; phi + bAng <= maxHi + ANGLE_EPS; phi += bAng) {
+        const k = Math.round(phi * 100);
+        if (seen.has(k)) continue;
+        seen.add(k);
+        if (!covered(phi, phi + bAng)) continue;
 
-      const angDelta = Math.abs(shortestAngle(rotation, border.rotation));
-      const score = dist + ANGLE_WEIGHT_MM_PER_DEG * angDelta;
-      if (!best || score < best.score) {
-        best = {
-          score,
-          snap: { borderUid: border.uid, hostUid: other.uid, pos, rotation },
-        };
+        const rotation = ((phi + 90) % 360 + 360) % 360;
+        const bc = rotate({ x: 0, y: bR }, rotation);
+        const pos = { x: cv.x - bc.x, y: cv.y - bc.y };
+        const dist = Math.hypot(border.pos.x - pos.x, border.pos.y - pos.y);
+        if (dist > BORDER_SNAP_DISTANCE) continue;
+
+        const angDelta = Math.abs(shortestAngle(rotation, border.rotation));
+        const score = dist + ANGLE_WEIGHT_MM_PER_DEG * angDelta;
+        if (!best || score < best.score) {
+          // Attach to the section that holds the slot's start, so the border
+          // rides along with that curve (and its connected run).
+          const host =
+            group.find((h) => phi >= h.lo - ANGLE_EPS && phi < h.hi - ANGLE_EPS) ??
+            group[0];
+          best = {
+            score,
+            snap: { borderUid: border.uid, hostUid: host.piece.uid, pos, rotation },
+          };
+        }
       }
     }
   }

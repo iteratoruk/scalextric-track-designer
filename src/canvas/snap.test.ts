@@ -183,3 +183,86 @@ describe("findBorderSnap", () => {
     });
   });
 });
+
+describe("C8228 R2 outer border", () => {
+  const R = 292.5;
+  const SIN45 = Math.sin(Math.PI / 4);
+  const SIN225 = Math.sin(Math.PI / 8);
+  const COS225 = Math.cos(Math.PI / 8);
+
+  const border = (overrides: Partial<Placed> = {}): Placed => ({
+    uid: "b1",
+    defId: "c8228-r2-outer-border",
+    pos: { x: 0, y: 0 },
+    rotation: 0,
+    mates: [],
+    ...overrides,
+  });
+
+  test("def: no connectors, R2 arc, three host types", () => {
+    const def = getDef("c8228-r2-outer-border");
+    expect(def.connectors).toEqual([]);
+    expect(def.arc).toEqual({ centreRadius: 292.5, angleDeg: 45 });
+    expect(def.borderFor).toEqual([
+      "c8206-r2-curve",
+      "c8193-racing-curve",
+      "c8234-r2-half-curve",
+    ]);
+  });
+
+  test("snaps onto a single C8206 (one 45° section)", () => {
+    const host: Placed = {
+      uid: "c1", defId: "c8206-r2-curve", pos: { x: 500, y: 400 }, rotation: 0, mates: [null, null],
+    };
+    const snap = findBorderSnap(border({ pos: { x: 505, y: 403 } }), [host]);
+    expect(snap).not.toBeNull();
+    expect(snap!.hostUid).toBe("c1");
+    expect(snap!.rotation).toBe(0);
+    expect(snap!.pos.x).toBeCloseTo(500);
+    expect(snap!.pos.y).toBeCloseTo(400);
+  });
+
+  test("offers two slots on the C8193 racing curve (R2, 90°)", () => {
+    const rc: Placed = {
+      uid: "rc", defId: "c8193-racing-curve", pos: { x: 0, y: 0 }, rotation: 0, mates: [null, null],
+    };
+    const s0 = findBorderSnap(border({ pos: { x: 3, y: 2 } }), [rc])!;
+    expect(s0.rotation).toBe(0);
+    expect(s0.pos.x).toBeCloseTo(0);
+    expect(s0.pos.y).toBeCloseTo(0);
+
+    const slot1 = { x: R * SIN45, y: R - R * SIN45 };
+    const s1 = findBorderSnap(border({ pos: slot1, rotation: 45 }), [rc])!;
+    expect(s1.rotation).toBe(45);
+    expect(s1.pos.x).toBeCloseTo(slot1.x);
+    expect(s1.pos.y).toBeCloseTo(slot1.y);
+  });
+
+  describe("two joined C8234 half-curves form one 45° host", () => {
+    // Half-curve A at origin, B mated to A's far end and rotated 22.5° — a
+    // smooth R2 bend. They share a centre of curvature at (0, 292.5).
+    const halfA: Placed = {
+      uid: "a", defId: "c8234-r2-half-curve", pos: { x: 0, y: 0 }, rotation: 0, mates: [null, { uid: "b", connectorIdx: 0 }],
+    };
+    const halfB: Placed = {
+      uid: "b",
+      defId: "c8234-r2-half-curve",
+      pos: { x: R * SIN225, y: R * (1 - COS225) },
+      rotation: 22.5,
+      mates: [{ uid: "a", connectorIdx: 1 }, null],
+    };
+
+    test("a 45° border snaps across both halves, anchored on the first", () => {
+      const snap = findBorderSnap(border({ pos: { x: 4, y: 2 } }), [halfA, halfB]);
+      expect(snap).not.toBeNull();
+      expect(snap!.rotation).toBe(0);
+      expect(snap!.pos.x).toBeCloseTo(0);
+      expect(snap!.pos.y).toBeCloseTo(0);
+      expect(snap!.hostUid).toBe("a"); // start section owns the border
+    });
+
+    test("a lone half-curve (22.5°) is too short — no snap", () => {
+      expect(findBorderSnap(border({ pos: { x: 0, y: 0 } }), [halfA])).toBeNull();
+    });
+  });
+});

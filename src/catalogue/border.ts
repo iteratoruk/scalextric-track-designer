@@ -94,3 +94,16 @@ export const c8240: PieceDef = makeBorder({
   width: 40,
   borderFor: ["c8202-r1-curve", "c8201-r1-hairpin"],
 });
+
+// C8228 R2 Outer Border, Kerb & Barrier — 45° kerb on the outside of any R2
+// curve (outer edge 370 mm). Ships 4 per pack; here as one placeable 45°
+// section. Fits the C8206 45° curve, the C8193 racing curve (R2 90°, two
+// sections), and a run of two C8234 half-curves that together make a 45° bend.
+export const c8228: PieceDef = makeBorder({
+  id: "c8228-r2-outer-border",
+  name: "C8228 R2 Outer Border (45°)",
+  centreRadius: 292.5,
+  angleDeg: 45,
+  width: 40,
+  borderFor: ["c8206-r2-curve", "c8193-racing-curve", "c8234-r2-half-curve"],
+});
