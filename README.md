@@ -41,6 +41,9 @@ for the full plan):
 | C8238 | R4 Outer Border (22.5°) | Kerb on the outside of the R4 curve (C8235); inner R 682 mm, 40 mm wide; joined C8235s merge into one host arc; ships 4 per pack |
 | C8279 | R1 Inner Border (45°) | 40 mm sand band hugging the **inside** edge of an R1 bend (C8202 / C8278 / C8201); no rumble strip; the real 180° piece is scored at 22.5°, modelled here as the practical 45° section; ships 2 per pack |
 | C8280 | R2 Inner Border (22.5°) | 40 mm sand band on the **inside** edge of an R2 bend (C8206 / C8234 / C8193); inner edge 215 mm, no rumble strip; same R2 host set as C8228/C8239; ships 4 per pack |
+| C8225 | R2 Inner Border (45°) | The 45° R2 inner section; inner edge 215 mm, 40 mm band, no rumble strip; same R2 host set as C8280; ships 4 per pack |
+| C8281 | R3 Inner Border (22.5°) | 40 mm sand band on the **inside** edge of the R3 curve (C8204); inner edge 371 mm, no rumble strip; ships 4 per pack |
+| C8282 | R4 Inner Border (22.5°) | 40 mm sand band on the **inside** edge of the R4 curve (C8235); inner edge 527 mm, no rumble strip; ships 4 per pack |
 
 All curves are rendered through a shared `makeCurve()` factory in
 [`src/catalogue/curve.ts`](src/catalogue/curve.ts), so additional radii and

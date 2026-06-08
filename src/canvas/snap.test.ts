@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { rotate, worldConnector, findBorderSnap, BORDER_SNAP_DISTANCE } from "./snap";
 import { getDef } from "../catalogue";
-import type { Placed } from "../types";
+import type { Placed, Vec } from "../types";
 
 const placed = (overrides: Partial<Placed> = {}): Placed => ({
   uid: "test",
@@ -484,5 +484,57 @@ describe("C8280 R2 inner border (22.5°)", () => {
     expect(s1.rotation).toBeCloseTo(22.5);
     expect(s1.pos.x).toBeCloseTo(slot1.x);
     expect(s1.pos.y).toBeCloseTo(slot1.y);
+  });
+});
+
+describe("inner borders across radii (C8225 / C8281 / C8282)", () => {
+  const place = (defId: string, host: Placed, near: Vec) =>
+    findBorderSnap(
+      { uid: "b", defId, pos: near, rotation: host.rotation, mates: [] },
+      [host],
+    );
+
+  test("C8225 R2 (45°): def + concentric snap onto a C8206", () => {
+    const def = getDef("c8225-r2-inner-border");
+    expect(def.arc).toEqual({ centreRadius: 292.5, angleDeg: 45 });
+    expect(def.borderFor).toEqual([
+      "c8206-r2-curve", "c8193-racing-curve", "c8234-r2-half-curve",
+    ]);
+    const host: Placed = {
+      uid: "c", defId: "c8206-r2-curve", pos: { x: 50, y: 60 }, rotation: 0, mates: [null, null],
+    };
+    const snap = place("c8225-r2-inner-border", host, { x: 53, y: 62 })!;
+    expect(snap.hostUid).toBe("c");
+    expect(snap.rotation).toBe(0);
+    expect(snap.pos.x).toBeCloseTo(50);
+    expect(snap.pos.y).toBeCloseTo(60);
+  });
+
+  test("C8281 R3 (22.5°): def + concentric snap onto a C8204", () => {
+    const def = getDef("c8281-r3-inner-border");
+    expect(def.arc).toEqual({ centreRadius: 448.5, angleDeg: 22.5 });
+    expect(def.borderFor).toEqual(["c8204-r3-curve"]);
+    const host: Placed = {
+      uid: "c", defId: "c8204-r3-curve", pos: { x: 10, y: 20 }, rotation: 45, mates: [null, null],
+    };
+    const snap = place("c8281-r3-inner-border", host, { x: 13, y: 22 })!;
+    expect(snap.hostUid).toBe("c");
+    expect(snap.rotation).toBe(45);
+    expect(snap.pos.x).toBeCloseTo(10);
+    expect(snap.pos.y).toBeCloseTo(20);
+  });
+
+  test("C8282 R4 (22.5°): def + concentric snap onto a C8235", () => {
+    const def = getDef("c8282-r4-inner-border");
+    expect(def.arc).toEqual({ centreRadius: 604.5, angleDeg: 22.5 });
+    expect(def.borderFor).toEqual(["c8235-r4-curve"]);
+    const host: Placed = {
+      uid: "c", defId: "c8235-r4-curve", pos: { x: -30, y: 5 }, rotation: 90, mates: [null, null],
+    };
+    const snap = place("c8282-r4-inner-border", host, { x: -27, y: 7 })!;
+    expect(snap.hostUid).toBe("c");
+    expect(snap.rotation).toBe(90);
+    expect(snap.pos.x).toBeCloseTo(-30);
+    expect(snap.pos.y).toBeCloseTo(5);
   });
 });

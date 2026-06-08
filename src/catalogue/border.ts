@@ -241,3 +241,36 @@ export const c8280: PieceDef = makeInnerBorder({
   width: 40,
   borderFor: ["c8206-r2-curve", "c8193-racing-curve", "c8234-r2-half-curve"],
 });
+
+// C8225 R2 Inner Border, Kerb & Barrier — the 45° R2 inner section (inner edge
+// 215 mm). Same R2 host set as C8280, one section per 45° bend.
+export const c8225: PieceDef = makeInnerBorder({
+  id: "c8225-r2-inner-border",
+  name: "C8225 R2 Inner Border (45°)",
+  centreRadius: 292.5,
+  angleDeg: 45,
+  width: 40,
+  borderFor: ["c8206-r2-curve", "c8193-racing-curve", "c8234-r2-half-curve"],
+});
+
+// C8281 R3 Inner Border, Kerb & Barrier — 22.5° band on the inside of the R3
+// curve (inner edge 371 mm). R3 only ships as the 22.5° C8204.
+export const c8281: PieceDef = makeInnerBorder({
+  id: "c8281-r3-inner-border",
+  name: "C8281 R3 Inner Border (22.5°)",
+  centreRadius: 448.5,
+  angleDeg: 22.5,
+  width: 40,
+  borderFor: ["c8204-r3-curve"],
+});
+
+// C8282 R4 Inner Border, Kerb & Barrier — 22.5° band on the inside of the R4
+// curve (inner edge 527 mm). R4 only ships as the 22.5° C8235.
+export const c8282: PieceDef = makeInnerBorder({
+  id: "c8282-r4-inner-border",
+  name: "C8282 R4 Inner Border (22.5°)",
+  centreRadius: 604.5,
+  angleDeg: 22.5,
+  width: 40,
+  borderFor: ["c8235-r4-curve"],
+});
