@@ -36,6 +36,7 @@ for the full plan):
 | C8193 | Racing Curve          | R2 radius, 90° (= 2 × C8206); slots cross over so inside lane becomes outside |
 | C8240 | R1 Outer Border (45°) | Kerb on the outside of an R1 curve; inner R 214 mm, 40 mm wide; clips concentrically to a C8202 (one section) or a C8201 hairpin (two sections); ships 4 per pack |
 | C8228 | R2 Outer Border (45°) | Kerb on the outside of an R2 curve; inner R 370 mm, 40 mm wide; clips to a C8206, the C8193 racing curve (two sections), or two C8234 half-curves spanned as one; ships 4 per pack |
+| C8239 | R2 Outer Border (22.5°) | The 22.5° half-section for R2 bends built from C8234 half-curves; same R2 outer edge (370 mm) and 40 mm width as C8228; subdivides longer hosts into more slots; ships 4 per pack |
 
 All curves are rendered through a shared `makeCurve()` factory in
 [`src/catalogue/curve.ts`](src/catalogue/curve.ts), so additional radii and

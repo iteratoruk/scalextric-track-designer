@@ -266,3 +266,58 @@ describe("C8228 R2 outer border", () => {
     });
   });
 });
+
+describe("C8239 R2 outer border (22.5° half-section)", () => {
+  const R = 292.5;
+  const SIN225 = Math.sin(Math.PI / 8);
+  const COS225 = Math.cos(Math.PI / 8);
+
+  const border = (overrides: Partial<Placed> = {}): Placed => ({
+    uid: "b1",
+    defId: "c8239-r2-outer-border-half",
+    pos: { x: 0, y: 0 },
+    rotation: 0,
+    mates: [],
+    ...overrides,
+  });
+
+  test("def: no connectors, 22.5° R2 arc, same R2 hosts as C8228", () => {
+    const def = getDef("c8239-r2-outer-border-half");
+    expect(def.connectors).toEqual([]);
+    expect(def.arc).toEqual({ centreRadius: 292.5, angleDeg: 22.5 });
+    expect(def.borderFor).toEqual([
+      "c8206-r2-curve",
+      "c8193-racing-curve",
+      "c8234-r2-half-curve",
+    ]);
+  });
+
+  test("snaps onto a single C8234 half-curve (one 22.5° section)", () => {
+    const half: Placed = {
+      uid: "h", defId: "c8234-r2-half-curve", pos: { x: 200, y: 100 }, rotation: 0, mates: [null, null],
+    };
+    const snap = findBorderSnap(border({ pos: { x: 203, y: 102 } }), [half]);
+    expect(snap).not.toBeNull();
+    expect(snap!.hostUid).toBe("h");
+    expect(snap!.rotation).toBe(0);
+    expect(snap!.pos.x).toBeCloseTo(200);
+    expect(snap!.pos.y).toBeCloseTo(100);
+  });
+
+  test("subdivides a 45° C8206 into two 22.5° slots", () => {
+    const host: Placed = {
+      uid: "c", defId: "c8206-r2-curve", pos: { x: 0, y: 0 }, rotation: 0, mates: [null, null],
+    };
+    const s0 = findBorderSnap(border({ pos: { x: 3, y: 2 } }), [host])!;
+    expect(s0.rotation).toBe(0);
+    expect(s0.pos.x).toBeCloseTo(0);
+    expect(s0.pos.y).toBeCloseTo(0);
+
+    // Second slot starts a half-curve along the arc — rotation 22.5°.
+    const slot1 = { x: R * SIN225, y: R * (1 - COS225) };
+    const s1 = findBorderSnap(border({ pos: slot1, rotation: 22.5 }), [host])!;
+    expect(s1.rotation).toBeCloseTo(22.5);
+    expect(s1.pos.x).toBeCloseTo(slot1.x);
+    expect(s1.pos.y).toBeCloseTo(slot1.y);
+  });
+});

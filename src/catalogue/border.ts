@@ -107,3 +107,15 @@ export const c8228: PieceDef = makeBorder({
   width: 40,
   borderFor: ["c8206-r2-curve", "c8193-racing-curve", "c8234-r2-half-curve"],
 });
+
+// C8239 R2 Outer Border, Kerb & Barrier — the 22.5° half-section, for dressing
+// R2 bends built from C8234 half-curves. Same R2 outer edge (370 mm) and host
+// set as C8228; the finer arc just subdivides longer hosts into more slots.
+export const c8239: PieceDef = makeBorder({
+  id: "c8239-r2-outer-border-half",
+  name: "C8239 R2 Outer Border (22.5°)",
+  centreRadius: 292.5,
+  angleDeg: 22.5,
+  width: 40,
+  borderFor: ["c8206-r2-curve", "c8193-racing-curve", "c8234-r2-half-curve"],
+});
