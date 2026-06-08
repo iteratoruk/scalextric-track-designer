@@ -44,6 +44,7 @@ for the full plan):
 | C8225 | R2 Inner Border (45°) | The 45° R2 inner section; inner edge 215 mm, 40 mm band, no rumble strip; same R2 host set as C8280; ships 4 per pack |
 | C8281 | R3 Inner Border (22.5°) | 40 mm sand band on the **inside** edge of the R3 curve (C8204); inner edge 371 mm, no rumble strip; ships 4 per pack |
 | C8282 | R4 Inner Border (22.5°) | 40 mm sand band on the **inside** edge of the R4 curve (C8235); inner edge 527 mm, no rumble strip; ships 4 per pack |
+| C8223 | Half-Straight Border | 175 mm rumble + apron border running alongside a **straight** edge; clips to either side of any straight run ≥ 175 mm, regardless of how the run is composed; ships 4 per pack |
 
 All curves are rendered through a shared `makeCurve()` factory in
 [`src/catalogue/curve.ts`](src/catalogue/curve.ts), so additional radii and
@@ -63,6 +64,13 @@ Inner borders (C8279, via the `makeInnerBorder` factory) snap with the same
 concentric logic but render on the *inside* of the bend — a sand band of the
 same width as the outer borders, hugging the inner track edge, with no rumble
 strip (no room on a tight inner radius) and 22.5° break-guide lines.
+
+Straight borders (C8223, via the `makeStraightBorder` factory) are the linear
+counterpart: they run *alongside* the edge of a straight. The same grouping idea
+applies — collinear straights pointing the same way merge into one run — and the
+border takes a length-sized slot anywhere along it, on either edge (a 180° flip
+puts it on the far side). So a half-straight border clips to either side of a
+350 mm straight, a 700 mm two-piece run, or any mix of equal total length.
 
 ## Features (so far)
 

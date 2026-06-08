@@ -538,3 +538,64 @@ describe("inner borders across radii (C8225 / C8281 / C8282)", () => {
     expect(snap.pos.y).toBeCloseTo(5);
   });
 });
+
+describe("C8223 half-straight border (edge snap)", () => {
+  const border = (overrides: Partial<Placed> = {}): Placed => ({
+    uid: "b1",
+    defId: "c8223-half-straight-border",
+    pos: { x: 0, y: 0 },
+    rotation: 0,
+    mates: [],
+    ...overrides,
+  });
+  const straight = (uid: string, defId: string, pos: Vec, rotation = 0): Placed => ({
+    uid, defId, pos, rotation, mates: [null, null],
+  });
+
+  test("def: no connectors, straight marker, no arc", () => {
+    const def = getDef("c8223-half-straight-border");
+    expect(def.connectors).toEqual([]);
+    expect(def.straight).toEqual({ length: 175 });
+    expect(def.arc).toBeUndefined();
+    expect(def.borderFor).toContain("c8205-straight");
+  });
+
+  test("two length slots along a standard straight (top edge)", () => {
+    const host = straight("s", "c8205-straight", { x: 100, y: 200 });
+    const s0 = findBorderSnap(border({ pos: { x: 103, y: 201 } }), [host])!;
+    expect(s0.hostUid).toBe("s");
+    expect(s0.rotation).toBe(0);
+    expect(s0.pos.x).toBeCloseTo(100);
+    expect(s0.pos.y).toBeCloseTo(200);
+
+    const s1 = findBorderSnap(border({ pos: { x: 273, y: 201 } }), [host])!;
+    expect(s1.rotation).toBe(0);
+    expect(s1.pos.x).toBeCloseTo(275); // second half, 175 mm along
+    expect(s1.pos.y).toBeCloseTo(200);
+  });
+
+  test("snaps to the far/bottom edge with a 180° flip", () => {
+    const host = straight("s", "c8205-straight", { x: 100, y: 200 });
+    // The only slot within range of the far end is the bottom-edge placement.
+    const snap = findBorderSnap(border({ pos: { x: 448, y: 202 }, rotation: 180 }), [host])!;
+    expect(snap.rotation).toBe(180);
+    expect(snap.pos.x).toBeCloseTo(450);
+    expect(snap.pos.y).toBeCloseTo(200);
+  });
+
+  test("spans a run of two collinear half-straights regardless of composition", () => {
+    const a = straight("a", "c8222-half-straight", { x: 0, y: 0 });
+    const b = straight("b", "c8222-half-straight", { x: 175, y: 0 });
+    const s0 = findBorderSnap(border({ pos: { x: 4, y: 2 } }), [a, b])!;
+    expect(s0.hostUid).toBe("a");
+    expect(s0.pos.x).toBeCloseTo(0);
+    const s1 = findBorderSnap(border({ pos: { x: 178, y: 1 } }), [a, b])!;
+    expect(s1.hostUid).toBe("b");
+    expect(s1.pos.x).toBeCloseTo(175);
+  });
+
+  test("does not snap to a straight shorter than the border", () => {
+    const quarter = straight("q", "c8200-quarter-straight", { x: 0, y: 0 }); // 87 mm
+    expect(findBorderSnap(border({ pos: { x: 0, y: 0 } }), [quarter])).toBeNull();
+  });
+});

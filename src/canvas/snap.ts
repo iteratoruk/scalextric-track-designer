@@ -114,17 +114,27 @@ function mergeRuns(intervals: Array<[number, number]>): Array<[number, number]> 
   return runs;
 }
 
-/** Find a host to clip a border onto. A border carries no connectors; it snaps
- *  concentrically onto pieces whose defId is in its `borderFor` list. The host
- *  arc can span several pieces: curves sharing a centre of curvature (joined
- *  smoothly, e.g. two R2 half-curves) merge into one continuous arc. A run
- *  longer than the border offers several section-sized slots, anchored at each
- *  section boundary; the border snaps to whichever slot it was dropped nearest.
- *  Each slot shares the host centre of curvature, so the kerb lands exactly on
- *  that section of the outer edge. */
+/** Find a host to clip a border onto. A border carries no connectors and lists
+ *  its hosts in `borderFor`. Dispatches by border kind: a curve border snaps
+ *  concentrically onto an arc host (sharing its centre of curvature); a straight
+ *  border snaps along the edge of a collinear straight run. */
 export function findBorderSnap(border: Placed, others: Placed[]): BorderSnap | null {
   const def = getDef(border.defId);
-  if (!def.borderFor || def.borderFor.length === 0 || !def.arc) return null;
+  if (!def.borderFor || def.borderFor.length === 0) return null;
+  if (def.arc) return curveBorderSnap(border, others);
+  if (def.straight) return straightBorderSnap(border, others, def.straight.length);
+  return null;
+}
+
+/** Concentric snap onto a curve host. The host arc can span several pieces:
+ *  curves sharing a centre of curvature (joined smoothly, e.g. two R2
+ *  half-curves) merge into one continuous arc. A run longer than the border
+ *  offers several section-sized slots, anchored at each section boundary; the
+ *  border snaps to whichever it was dropped nearest. Each slot shares the host
+ *  centre of curvature, so the kerb lands exactly on that section. */
+function curveBorderSnap(border: Placed, others: Placed[]): BorderSnap | null {
+  const def = getDef(border.defId);
+  if (!def.borderFor || !def.arc) return null;
   const bAng = def.arc.angleDeg;
   const bR = def.arc.centreRadius;
 
@@ -188,6 +198,82 @@ export function findBorderSnap(border: Placed, others: Placed[]): BorderSnap | n
             score,
             snap: { borderUid: border.uid, hostUid: host.piece.uid, pos, rotation },
           };
+        }
+      }
+    }
+  }
+  return best?.snap ?? null;
+}
+
+const LINE_EPS = 0.5; // mm tolerance for "same line" / contiguous run
+
+/** Edge snap onto a straight host. Collinear straights pointing the same way
+ *  (a built straight run shares one rotation) merge into one edge; the border
+ *  takes a length-sized slot anywhere along that run, on either side. Mirrors
+ *  the curve snap but linear: distance along the line replaces angle, and the
+ *  two track edges (±W/2) replace the single outer/inner edge. */
+function straightBorderSnap(
+  border: Placed,
+  others: Placed[],
+  borderLen: number,
+): BorderSnap | null {
+  const borderFor = getDef(border.defId).borderFor!;
+
+  // Group host straights by the infinite line they sit on (rotation + offset).
+  type Group = { rotation: number; ref: Vec; d: Vec; segs: Array<{ piece: Placed; lo: number; hi: number }> };
+  const groups = new Map<string, Group>();
+  for (const other of others) {
+    if (!borderFor.includes(other.defId)) continue;
+    const hostDef = getDef(other.defId);
+    const len = hostDef.bbox.w; // makeStraight bbox width is the run length
+    const rot = ((other.rotation % 360) + 360) % 360;
+    const n = rotate({ x: 0, y: 1 }, rot); // unit normal to the line
+    const offset = other.pos.x * n.x + other.pos.y * n.y;
+    const key = `${Math.round(rot)},${Math.round(offset / LINE_EPS)}`;
+    let g = groups.get(key);
+    if (!g) {
+      g = { rotation: rot, ref: other.pos, d: rotate({ x: 1, y: 0 }, rot), segs: [] };
+      groups.set(key, g);
+    }
+    const t0 = (other.pos.x - g.ref.x) * g.d.x + (other.pos.y - g.ref.y) * g.d.y;
+    g.segs.push({ piece: other, lo: t0, hi: t0 + len });
+  }
+
+  let best: { score: number; snap: BorderSnap } | null = null;
+  for (const g of groups.values()) {
+    const { d } = g;
+    const runs = mergeRuns(g.segs.map((s) => [s.lo, s.hi]));
+    const maxHi = Math.max(...runs.map((r) => r[1]));
+    const covered = (lo: number, hi: number) =>
+      runs.some(([rl, rh]) => lo >= rl - LINE_EPS && hi <= rh + LINE_EPS);
+
+    const seen = new Set<number>();
+    for (const s of g.segs) {
+      for (let t = s.lo; t + borderLen <= maxHi + LINE_EPS; t += borderLen) {
+        const k = Math.round(t * 100);
+        if (seen.has(k)) continue;
+        seen.add(k);
+        if (!covered(t, t + borderLen)) continue;
+
+        // Two placements: top edge (rotation = host) anchored at t, and bottom
+        // edge (rotation + 180) anchored at the far end t + borderLen.
+        for (const side of [0, 1]) {
+          const rotation = side === 0 ? g.rotation : (g.rotation + 180) % 360;
+          const at = side === 0 ? t : t + borderLen;
+          const pos = { x: g.ref.x + at * d.x, y: g.ref.y + at * d.y };
+          const dist = Math.hypot(border.pos.x - pos.x, border.pos.y - pos.y);
+          if (dist > BORDER_SNAP_DISTANCE) continue;
+
+          const angDelta = Math.abs(shortestAngle(rotation, border.rotation));
+          const score = dist + ANGLE_WEIGHT_MM_PER_DEG * angDelta;
+          if (!best || score < best.score) {
+            const host =
+              g.segs.find((seg) => t >= seg.lo - LINE_EPS && t < seg.hi - LINE_EPS) ?? g.segs[0];
+            best = {
+              score,
+              snap: { borderUid: border.uid, hostUid: host.piece.uid, pos, rotation },
+            };
+          }
         }
       }
     }

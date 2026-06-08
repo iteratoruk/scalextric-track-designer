@@ -119,6 +119,15 @@ start. `connectedComponent` then pulls hosted borders along when the host is
 dragged or rotated (one-directional — grabbing the border alone just repositions
 it). C8240 (R1, 45°) and C8228 (R2, 45°) are the first such pieces: one section
 borders a 45° curve, two wrap a 90° curve, and one spans two joined half-curves.
+Inner borders (C8279) reuse all of this but render on the inside edge.
+
+**Straight borders** (C8223) are the linear analogue: `findBorderSnap` dispatches
+on the border kind (`arc` → concentric curve snap; `straight` → edge snap). The
+edge snap groups collinear straights pointing the same way into one run (distance
+along the line replaces angle around the centre of curvature), then offers
+length-sized slots along it on either track edge — the far edge via a 180° flip.
+Hosts (straights) expose their length through `bbox.w`, so no extra metadata is
+needed; the `host` ride-along is shared with the curve borders.
 
 ## Interaction
 

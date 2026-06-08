@@ -155,6 +155,78 @@ export function makeInnerBorder(opts: InnerBorderOptions): PieceDef {
   };
 }
 
+interface StraightBorderOptions {
+  id: string;
+  name: string;
+  /** Length along the straight, in mm. */
+  length: number;
+  /** Radial width of the band in mm. */
+  width: number;
+  /** Def-ids of the straights this border runs alongside. */
+  borderFor: string[];
+}
+
+const STRAIGHT_STRIPE_LEN = 15; // approximate length of one rumble stripe (mm)
+
+/** A straight-edge border. Built on the top edge in the host straight's local
+ *  frame (track edge at y = −W/2, extending outward), so `findBorderSnap`'s
+ *  straight path can lay it on either edge of a collinear straight run by
+ *  sharing the host's pos/rotation (top) or rotating 180° (bottom). Rumble strip
+ *  against the track, sand apron beyond — same look as the curve outer borders. */
+export function makeStraightBorder(opts: StraightBorderOptions): PieceDef {
+  const { id, name, length: LEN, width, borderFor } = opts;
+  const yTrack = -W / 2; // track edge
+  const yRumble = yTrack - RUMBLE_W; // rumble/apron boundary (outward)
+  const yOut = yTrack - width; // outer edge
+
+  return {
+    id,
+    name,
+    connectors: [],
+    rotateStep: 90,
+    straight: { length: LEN },
+    borderFor,
+    bbox: { x: 0, y: yOut, w: LEN, h: width },
+    render() {
+      const rect = (x: number, y: number, w: number, h: number, cls: string) => {
+        const r = document.createElementNS(NS, "rect");
+        r.setAttribute("x", String(x));
+        r.setAttribute("y", String(y));
+        r.setAttribute("width", String(w));
+        r.setAttribute("height", String(h));
+        r.setAttribute("class", cls);
+        return r;
+      };
+
+      // Sand apron fills from the rumble strip out to the edge.
+      const apron = rect(0, yOut, LEN, width - RUMBLE_W, "kerb-apron");
+
+      // Red/white rumble strip against the track edge — even stripe count so
+      // abutting sections keep a continuous alternation.
+      let n = Math.max(2, Math.round(LEN / STRAIGHT_STRIPE_LEN));
+      if (n % 2 === 1) n += 1;
+      const step = LEN / n;
+      const stripes = [];
+      for (let i = 0; i < n; i++) {
+        const cls = i % 2 === 0 ? "kerb-rumble-red" : "kerb-rumble-white";
+        stripes.push(rect(i * step, yRumble, step, RUMBLE_W, cls));
+      }
+
+      return [apron, ...stripes];
+    },
+  };
+}
+
+const STRAIGHTS = [
+  "c8505-extra-long-straight",
+  "c8205-straight",
+  "c8222-half-straight",
+  "c8200-quarter-straight",
+  "c8236-short-straight",
+  "c8246-sideswipe-narrowing",
+  "c8246-sideswipe-expanding",
+];
+
 // C8240 R1 Outer Borders — 45° kerb on the outside of any R1 curve (outer edge
 // 214 mm). Ships 4 per pack; here as one placeable 45° section. Fits the C8202
 // 45° curve (one section) and the C8201 90° hairpin (two sections, side by side).
@@ -273,4 +345,15 @@ export const c8282: PieceDef = makeInnerBorder({
   angleDeg: 22.5,
   width: 40,
   borderFor: ["c8235-r4-curve"],
+});
+
+// C8223 Half-Straight Border, Kerb & Barrier — 175 mm (half a standard
+// straight), 40 mm wide. Runs alongside the edge of any straight run long
+// enough to hold it, on either side, regardless of how the run is composed.
+export const c8223: PieceDef = makeStraightBorder({
+  id: "c8223-half-straight-border",
+  name: "C8223 Half-Straight Border",
+  length: 175,
+  width: 40,
+  borderFor: STRAIGHTS,
 });

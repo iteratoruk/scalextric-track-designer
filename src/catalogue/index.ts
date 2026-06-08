@@ -4,7 +4,7 @@ import { c8201, c8202, c8204, c8206, c8234, c8235, c8278 } from "./curve";
 import { c8210, c8295 } from "./crossover";
 import { c8193 } from "./racing-curve";
 import {
-  c8224, c8225, c8228, c8238, c8239, c8240, c8279, c8280, c8281, c8282,
+  c8223, c8224, c8225, c8228, c8238, c8239, c8240, c8279, c8280, c8281, c8282,
 } from "./border";
 
 export const catalogue: PieceDef[] = [
@@ -16,6 +16,7 @@ export const catalogue: PieceDef[] = [
   c8210, c8295,
   c8240, c8228, c8239, c8224, c8238,
   c8279, c8280, c8225, c8281, c8282,
+  c8223,
 ];
 
 const byId = new Map(catalogue.map((p) => [p.id, p]));

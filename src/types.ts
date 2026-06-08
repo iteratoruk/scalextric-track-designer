@@ -16,8 +16,12 @@ export type PieceDef = {
    *  piece's local frame: centre of curvature at (0, centreRadius). Lets a
    *  border find each section-sized slot around a longer host arc. */
   arc?: { centreRadius: number; angleDeg: number };
-  /** If present, this piece is a border accessory that snaps concentrically onto
-   *  the outer edge of any placed piece whose defId is listed here. */
+  /** Straight-border marker: this border snaps along the edge of a straight run
+   *  (rather than concentrically onto a curve). `length` is its run length. */
+  straight?: { length: number };
+  /** If present, this piece is a border accessory that snaps onto any placed
+   *  piece whose defId is listed here — concentrically if it has `arc`, or along
+   *  the edge if it has `straight`. */
   borderFor?: string[];
 };
 
