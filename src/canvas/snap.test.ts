@@ -358,3 +358,33 @@ describe("C8224 R3 outer border (22.5°)", () => {
     expect(findBorderSnap(border({ pos: { x: 304, y: 153 } }), [r2])).toBeNull();
   });
 });
+
+describe("C8238 R4 outer border (22.5°)", () => {
+  const border = (overrides: Partial<Placed> = {}): Placed => ({
+    uid: "b1",
+    defId: "c8238-r4-outer-border",
+    pos: { x: 0, y: 0 },
+    rotation: 0,
+    mates: [],
+    ...overrides,
+  });
+
+  test("def: no connectors, R4 arc, fits the C8235 R4 curve", () => {
+    const def = getDef("c8238-r4-outer-border");
+    expect(def.connectors).toEqual([]);
+    expect(def.arc).toEqual({ centreRadius: 604.5, angleDeg: 22.5 });
+    expect(def.borderFor).toEqual(["c8235-r4-curve"]);
+  });
+
+  test("snaps concentrically onto a C8235 R4 curve", () => {
+    const host: Placed = {
+      uid: "c", defId: "c8235-r4-curve", pos: { x: -200, y: 600 }, rotation: 135, mates: [null, null],
+    };
+    const snap = findBorderSnap(border({ pos: { x: -196, y: 603 } }), [host]);
+    expect(snap).not.toBeNull();
+    expect(snap!.hostUid).toBe("c");
+    expect(snap!.rotation).toBe(135);
+    expect(snap!.pos.x).toBeCloseTo(-200);
+    expect(snap!.pos.y).toBeCloseTo(600);
+  });
+});

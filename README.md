@@ -38,6 +38,7 @@ for the full plan):
 | C8228 | R2 Outer Border (45°) | Kerb on the outside of an R2 curve; inner R 370 mm, 40 mm wide; clips to a C8206, the C8193 racing curve (two sections), or two C8234 half-curves spanned as one; ships 4 per pack |
 | C8239 | R2 Outer Border (22.5°) | The 22.5° half-section for R2 bends built from C8234 half-curves; same R2 outer edge (370 mm) and 40 mm width as C8228; subdivides longer hosts into more slots; ships 4 per pack |
 | C8224 | R3 Outer Border (22.5°) | Kerb on the outside of the R3 curve (C8204); inner R 526 mm, 40 mm wide; joined C8204s merge into one host arc; ships 4 per pack |
+| C8238 | R4 Outer Border (22.5°) | Kerb on the outside of the R4 curve (C8235); inner R 682 mm, 40 mm wide; joined C8235s merge into one host arc; ships 4 per pack |
 
 All curves are rendered through a shared `makeCurve()` factory in
 [`src/catalogue/curve.ts`](src/catalogue/curve.ts), so additional radii and
