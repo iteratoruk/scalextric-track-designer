@@ -119,3 +119,15 @@ export const c8239: PieceDef = makeBorder({
   width: 40,
   borderFor: ["c8206-r2-curve", "c8193-racing-curve", "c8234-r2-half-curve"],
 });
+
+// C8224 R3 Outer Border, Kerb & Barrier — 22.5° kerb on the outside of the R3
+// curve (outer edge 526 mm). R3 only ships as a 22.5° curve (C8204), so that's
+// the lone host; a run of joined C8204s merges into one arc for more slots.
+export const c8224: PieceDef = makeBorder({
+  id: "c8224-r3-outer-border",
+  name: "C8224 R3 Outer Border (22.5°)",
+  centreRadius: 448.5,
+  angleDeg: 22.5,
+  width: 40,
+  borderFor: ["c8204-r3-curve"],
+});
