@@ -599,3 +599,30 @@ describe("C8223 half-straight border (edge snap)", () => {
     expect(findBorderSnap(border({ pos: { x: 0, y: 0 } }), [quarter])).toBeNull();
   });
 });
+
+describe("C8233 lead-in / lead-out borders (mirrored pair)", () => {
+  const at = (defId: string, pos: Vec): Placed => ({
+    uid: "b", defId, pos, rotation: 0, mates: [],
+  });
+
+  test("both variants are 350 mm straight borders with no arc", () => {
+    for (const id of ["c8233-lead-in-border", "c8233-lead-out-border"]) {
+      const def = getDef(id);
+      expect(def.connectors).toEqual([]);
+      expect(def.straight).toEqual({ length: 350 });
+      expect(def.arc).toBeUndefined();
+    }
+  });
+
+  test("a lead-in snaps along a standard straight; the pair are distinct defs", () => {
+    const host: Placed = {
+      uid: "s", defId: "c8205-straight", pos: { x: 200, y: 100 }, rotation: 0, mates: [null, null],
+    };
+    const snap = findBorderSnap(at("c8233-lead-in-border", { x: 203, y: 101 }), [host])!;
+    expect(snap.hostUid).toBe("s");
+    expect(snap.rotation).toBe(0);
+    expect(snap.pos.x).toBeCloseTo(200);
+    expect(snap.pos.y).toBeCloseTo(100);
+    expect(getDef("c8233-lead-in-border")).not.toBe(getDef("c8233-lead-out-border"));
+  });
+});

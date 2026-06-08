@@ -45,6 +45,7 @@ for the full plan):
 | C8281 | R3 Inner Border (22.5°) | 40 mm sand band on the **inside** edge of the R3 curve (C8204); inner edge 371 mm, no rumble strip; ships 4 per pack |
 | C8282 | R4 Inner Border (22.5°) | 40 mm sand band on the **inside** edge of the R4 curve (C8235); inner edge 527 mm, no rumble strip; ships 4 per pack |
 | C8223 | Half-Straight Border | 175 mm rumble + apron border running alongside a **straight** edge; clips to either side of any straight run ≥ 175 mm, regardless of how the run is composed; ships 4 per pack |
+| C8233 | Lead-In / Lead-Out Borders | Mirrored pair (two palette items), standard-straight length (350 mm), tapering from the full border down to just the rumble strip; same straight-edge snap as C8223; ships 2 per pack |
 
 All curves are rendered through a shared `makeCurve()` factory in
 [`src/catalogue/curve.ts`](src/catalogue/curve.ts), so additional radii and

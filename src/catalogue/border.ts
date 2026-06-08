@@ -164,6 +164,10 @@ interface StraightBorderOptions {
   width: number;
   /** Def-ids of the straights this border runs alongside. */
   borderFor: string[];
+  /** Apron taper: omit for a constant-width band; "in" is full at the start and
+   *  tapers to just the rumble strip at the far end; "out" is the reverse. The
+   *  two directions are the mirrored pair used for lead-in / lead-out borders. */
+  taper?: "in" | "out";
 }
 
 const STRAIGHT_STRIPE_LEN = 15; // approximate length of one rumble stripe (mm)
@@ -174,7 +178,7 @@ const STRAIGHT_STRIPE_LEN = 15; // approximate length of one rumble stripe (mm)
  *  sharing the host's pos/rotation (top) or rotating 180° (bottom). Rumble strip
  *  against the track, sand apron beyond — same look as the curve outer borders. */
 export function makeStraightBorder(opts: StraightBorderOptions): PieceDef {
-  const { id, name, length: LEN, width, borderFor } = opts;
+  const { id, name, length: LEN, width, borderFor, taper } = opts;
   const yTrack = -W / 2; // track edge
   const yRumble = yTrack - RUMBLE_W; // rumble/apron boundary (outward)
   const yOut = yTrack - width; // outer edge
@@ -188,7 +192,7 @@ export function makeStraightBorder(opts: StraightBorderOptions): PieceDef {
     borderFor,
     bbox: { x: 0, y: yOut, w: LEN, h: width },
     render() {
-      const rect = (x: number, y: number, w: number, h: number, cls: string) => {
+      const NSrect = (x: number, y: number, w: number, h: number, cls: string) => {
         const r = document.createElementNS(NS, "rect");
         r.setAttribute("x", String(x));
         r.setAttribute("y", String(y));
@@ -198,18 +202,32 @@ export function makeStraightBorder(opts: StraightBorderOptions): PieceDef {
         return r;
       };
 
-      // Sand apron fills from the rumble strip out to the edge.
-      const apron = rect(0, yOut, LEN, width - RUMBLE_W, "kerb-apron");
+      // Sand apron: a constant-width band, or a triangle tapering to the rumble.
+      let apron: SVGElement;
+      if (!taper) {
+        apron = NSrect(0, yOut, LEN, width - RUMBLE_W, "kerb-apron");
+      } else {
+        // Outer edge of the apron runs from the full outer edge at the wide end
+        // to the rumble boundary (zero apron) at the narrow end.
+        const outerStart = taper === "in" ? yOut : yRumble;
+        const outerEnd = taper === "in" ? yRumble : yOut;
+        apron = document.createElementNS(NS, "path");
+        apron.setAttribute(
+          "d",
+          `M 0 ${yRumble} L ${LEN} ${yRumble} L ${LEN} ${outerEnd} L 0 ${outerStart} Z`,
+        );
+        apron.setAttribute("class", "kerb-apron");
+      }
 
-      // Red/white rumble strip against the track edge — even stripe count so
-      // abutting sections keep a continuous alternation.
+      // Red/white rumble strip against the track edge, full length — even stripe
+      // count so abutting sections keep a continuous alternation.
       let n = Math.max(2, Math.round(LEN / STRAIGHT_STRIPE_LEN));
       if (n % 2 === 1) n += 1;
       const step = LEN / n;
       const stripes = [];
       for (let i = 0; i < n; i++) {
         const cls = i % 2 === 0 ? "kerb-rumble-red" : "kerb-rumble-white";
-        stripes.push(rect(i * step, yRumble, step, RUMBLE_W, cls));
+        stripes.push(NSrect(i * step, yRumble, step, RUMBLE_W, cls));
       }
 
       return [apron, ...stripes];
@@ -356,4 +374,26 @@ export const c8223: PieceDef = makeStraightBorder({
   length: 175,
   width: 40,
   borderFor: STRAIGHTS,
+});
+
+// C8233 Lead-In / Lead-Out Sports Borders — a mirrored pair, standard-straight
+// length (350 mm), tapering from the full border down to just the rumble strip.
+// The two taper directions let you ease the border in or out, and (with the
+// edge flip) dress either side of the track symmetrically.
+export const c8233LeadIn: PieceDef = makeStraightBorder({
+  id: "c8233-lead-in-border",
+  name: "C8233 Lead-In Border",
+  length: 350,
+  width: 40,
+  borderFor: STRAIGHTS,
+  taper: "in",
+});
+
+export const c8233LeadOut: PieceDef = makeStraightBorder({
+  id: "c8233-lead-out-border",
+  name: "C8233 Lead-Out Border",
+  length: 350,
+  width: 40,
+  borderFor: STRAIGHTS,
+  taper: "out",
 });
