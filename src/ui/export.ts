@@ -13,6 +13,9 @@ const STYLE = `
 .piece .slot { stroke: #0a0a0a; stroke-width: 3; fill: none; stroke-linecap: butt; }
 .piece .rail { stroke: #b4b4b4; stroke-width: 1.2; fill: none; stroke-linecap: butt; }
 .piece .shadow { fill: rgba(0, 0, 0, 0.35); }
+.piece .kerb-apron { fill: #c8aa66; stroke: #6b5a2e; stroke-width: 1; }
+.piece .kerb-rumble-red { fill: #cf3a2c; stroke: none; }
+.piece .kerb-rumble-white { fill: #f2ede0; stroke: none; }
 `;
 
 export function exportPng(filename = "track.png") {

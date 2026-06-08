@@ -81,6 +81,11 @@ export function connectedComponent(uid: string): string[] {
       if (m && !visited.has(m.uid)) queue.push(m.uid);
     }
   }
+  // Borders ride along with their host. One-directional on purpose: a host
+  // pulls its borders, but grabbing a border alone only moves the border.
+  for (const p of state.track.pieces) {
+    if (p.host && visited.has(p.host)) visited.add(p.uid);
+  }
   return Array.from(visited);
 }
 
@@ -92,6 +97,10 @@ export function removePiece(uid: string) {
     if (!mate) continue;
     const neighbour = state.track.pieces.find((p) => p.uid === mate.uid);
     if (neighbour) neighbour.mates[mate.connectorIdx] = null;
+  }
+  // Orphan any borders clipped onto the piece being removed.
+  for (const p of state.track.pieces) {
+    if (p.host === uid) p.host = undefined;
   }
   state.track.pieces.splice(idx, 1);
   if (state.selectedUid === uid) state.selectedUid = null;
@@ -113,6 +122,11 @@ export function detach(uid: string) {
     const n = state.track.pieces.find((p) => p.uid === m.uid);
     if (n) n.mates[m.connectorIdx] = null;
     piece.mates[i] = null;
+    changed = true;
+  }
+  // A border detaches from its host (it has no mates of its own).
+  if (piece.host) {
+    piece.host = undefined;
     changed = true;
   }
   if (changed) emit();

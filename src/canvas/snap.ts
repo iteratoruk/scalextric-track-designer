@@ -2,6 +2,10 @@ import type { Placed, Connector, Vec } from "../types";
 import { getDef } from "../catalogue";
 
 export const SNAP_DISTANCE = 15;
+// Borders snap by overlaying their local origin on the host's, so the catch
+// radius can be more generous than end-to-end mating: there's exactly one
+// valid placement per host and the whole band aligns at once.
+export const BORDER_SNAP_DISTANCE = 50;
 // Each degree of required rotation costs this many "millimetres" of score,
 // so a near-pair that demands a 180° flip loses to a slightly farther pair
 // that needs no rotation.
@@ -79,6 +83,59 @@ export function findSnap(moving: Placed, others: Placed[]): SingleSnap | null {
     }
   }
   return best?.res ?? null;
+}
+
+export type BorderSnap = {
+  borderUid: string;
+  hostUid: string;
+  pos: Vec;
+  rotation: number;
+};
+
+/** Find a host piece to clip a border onto. A border carries no connectors; it
+ *  snaps concentrically onto any nearby piece whose defId is in the border's
+ *  `borderFor` list. A host arc longer than the border (e.g. the 90° C8201
+ *  hairpin vs a 45° C8240) offers several section-sized slots around its outer
+ *  edge; the border snaps to whichever slot it was dropped nearest. Each slot
+ *  shares the host's centre of curvature, rotated by the slot's angular offset,
+ *  so the kerb lands exactly on that section of the outer edge. */
+export function findBorderSnap(border: Placed, others: Placed[]): BorderSnap | null {
+  const def = getDef(border.defId);
+  if (!def.borderFor || def.borderFor.length === 0 || !def.arc) return null;
+  const bAng = def.arc.angleDeg;
+  const bR = def.arc.centreRadius;
+
+  let best: { score: number; snap: BorderSnap } | null = null;
+  for (const other of others) {
+    if (!def.borderFor.includes(other.defId)) continue;
+    const hostDef = getDef(other.defId);
+    if (!hostDef.arc) continue;
+
+    // Host centre of curvature in world (local (0, centreRadius)).
+    const hc = rotate({ x: 0, y: hostDef.arc.centreRadius }, other.rotation);
+    const hostCv = { x: other.pos.x + hc.x, y: other.pos.y + hc.y };
+
+    // One slot per border-sized section that fits within the host arc.
+    const EPS = 1e-6;
+    for (let phi = 0; phi + bAng <= hostDef.arc.angleDeg + EPS; phi += bAng) {
+      const rotation = (other.rotation + phi + 720) % 360;
+      const bc = rotate({ x: 0, y: bR }, rotation);
+      const pos = { x: hostCv.x - bc.x, y: hostCv.y - bc.y };
+
+      const dist = Math.hypot(border.pos.x - pos.x, border.pos.y - pos.y);
+      if (dist > BORDER_SNAP_DISTANCE) continue;
+
+      const angDelta = Math.abs(shortestAngle(rotation, border.rotation));
+      const score = dist + ANGLE_WEIGHT_MM_PER_DEG * angDelta;
+      if (!best || score < best.score) {
+        best = {
+          score,
+          snap: { borderUid: border.uid, hostUid: other.uid, pos, rotation },
+        };
+      }
+    }
+  }
+  return best?.snap ?? null;
 }
 
 export type ChainSnap = {

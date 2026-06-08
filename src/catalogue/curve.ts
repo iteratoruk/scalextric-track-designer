@@ -51,6 +51,7 @@ export function makeCurve(opts: CurveOptions): PieceDef {
     name,
     connectors: [conn0, conn1],
     rotateStep: opts.rotateStep ?? angleDeg,
+    arc: { centreRadius: R, angleDeg },
     bbox: { x: 0, y: -W / 2, w: Ro * sin, h: R - Ri * cos + W / 2 },
     render() {
       const oStart = { x: 0, y: -W / 2 };

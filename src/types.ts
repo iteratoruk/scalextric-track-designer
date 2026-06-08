@@ -6,11 +6,19 @@ export type PieceDef = {
   id: string;
   name: string;
   /** Connectors in the piece's local frame. Length is fixed per piece type (2 for
-   *  straights and curves, 4 for crossovers, etc.). */
+   *  straights and curves, 4 for crossovers, etc.). Borders carry none — they
+   *  attach concentrically to a host piece rather than mating end-to-end. */
   connectors: Connector[];
   render(): SVGElement[];
   bbox: { x: number; y: number; w: number; h: number };
   rotateStep: number;
+  /** Arc geometry for curved pieces (and the borders that wrap them), in the
+   *  piece's local frame: centre of curvature at (0, centreRadius). Lets a
+   *  border find each section-sized slot around a longer host arc. */
+  arc?: { centreRadius: number; angleDeg: number };
+  /** If present, this piece is a border accessory that snaps concentrically onto
+   *  the outer edge of any placed piece whose defId is listed here. */
+  borderFor?: string[];
 };
 
 export type Mate = { uid: string; connectorIdx: number };
@@ -22,6 +30,9 @@ export type Placed = {
   rotation: number;
   /** One entry per connector on the def; `null` means free, otherwise mated. */
   mates: (Mate | null)[];
+  /** For border pieces: the uid of the host piece this border is clipped onto.
+   *  The border shares the host's pos/rotation and rides along when it moves. */
+  host?: string;
 };
 
 export type Track = {

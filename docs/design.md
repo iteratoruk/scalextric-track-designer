@@ -101,6 +101,22 @@ When a piece is placed or moved:
 4. If both ends of the moving piece can snap, prefer the closer one; the other
    only snaps if its geometry already lines up (don't tear the piece).
 
+### Borders (accessories)
+
+Borders (kerbs) don't mate end-to-end — they clip onto the *outside* of a
+curve. A border `PieceDef` carries **no connectors** and a `borderFor` list of
+the curve def-ids it fits; it's built in the host curve's own local frame, so
+overlaying the two origins lays the kerb exactly on the outer edge. `Placed`
+gains an optional `host` (the curve's uid). On drop/move, `findBorderSnap`
+overlays a nearby border onto a matching host. Hosts expose their `arc`
+(centre-of-curvature radius + sweep), so a host longer than the border offers
+several section-sized slots around its outer edge (each sharing the host's
+centre of curvature, rotated by the slot offset); the border snaps to whichever
+it was dropped nearest. `connectedComponent` then pulls hosted borders along
+when the host is dragged or rotated (one-directional — grabbing the border alone
+just repositions it). C8240 (R1 outer, 45°) is the first such piece: one section
+borders a C8202, two wrap the 90° C8201 hairpin.
+
 ## Interaction
 
 - **Drag from palette** → drop on canvas creates a new piece at cursor; runs

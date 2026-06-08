@@ -34,10 +34,19 @@ for the full plan):
 | C8204 | R3 Curve (22.5°)      | Outer R 526 mm, inner R 371 mm, centre-line 448.5 mm |
 | C8235 | R4 Curve (22.5°)      | Outer R 682 mm, inner R 527 mm, centre-line 604.5 mm |
 | C8193 | Racing Curve          | R2 radius, 90° (= 2 × C8206); slots cross over so inside lane becomes outside |
+| C8240 | R1 Outer Border (45°) | Kerb on the outside of an R1 curve; inner R 214 mm, 40 mm wide; clips concentrically to a C8202 (one section) or a C8201 hairpin (two sections); ships 4 per pack |
 
 All curves are rendered through a shared `makeCurve()` factory in
 [`src/catalogue/curve.ts`](src/catalogue/curve.ts), so additional radii and
 half-angle variants land as a single call site each.
+
+Border accessories use a sibling `makeBorder()` factory in
+[`src/catalogue/border.ts`](src/catalogue/border.ts). A border carries no
+connectors: instead of mating end-to-end it snaps *concentrically* onto the
+outer edge of any curve listed in its `borderFor` set (C8240 → C8202 and the
+C8201 hairpin), and then rides along when that curve is dragged or rotated. A
+host arc longer than the border (the 90° hairpin) offers several section-sized
+slots, so two C8240s wrap it end to end. Double-click a border to peel it off.
 
 ## Features (so far)
 

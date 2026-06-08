@@ -13,7 +13,14 @@ import {
 } from "../state/store";
 import { renderRoom } from "./room";
 import { renderPiece } from "./piece";
-import { findChainSnap, rotate, worldConnector, type ChainSnap } from "./snap";
+import {
+  findChainSnap,
+  findBorderSnap,
+  rotate,
+  worldConnector,
+  type ChainSnap,
+  type BorderSnap,
+} from "./snap";
 import { getDef } from "../catalogue";
 import type { Placed, Vec } from "../types";
 
@@ -142,6 +149,10 @@ function attachEvents() {
     if (target) {
       const uid = target.getAttribute("data-uid")!;
       select(uid);
+      // Grabbing a border directly repositions it: drop its host link so it
+      // moves alone and is free to re-snap (to this or another curve) on drop.
+      const grabbed = getState().track.pieces.find((p) => p.uid === uid);
+      if (grabbed?.host) detach(uid);
       const componentUids = connectedComponent(uid);
       const startPositions = new Map<string, Vec>();
       for (const cid of componentUids) {
@@ -304,7 +315,27 @@ function tryChainSnap(componentUids: string[]) {
   const inside = track.pieces.filter((p) => set.has(p.uid));
   const outside = track.pieces.filter((p) => !set.has(p.uid));
   const snap = findChainSnap(inside, outside);
-  if (snap) applyChainSnap(snap, componentUids);
+  if (snap) {
+    applyChainSnap(snap, componentUids);
+    return;
+  }
+  // Borders have no connectors, so findChainSnap skips them — clip any moving
+  // border onto a host curve concentrically instead.
+  for (const piece of inside) {
+    const bsnap = findBorderSnap(piece, outside);
+    if (bsnap) {
+      applyBorderSnap(bsnap);
+      break;
+    }
+  }
+}
+
+function applyBorderSnap(snap: BorderSnap) {
+  updatePiece(snap.borderUid, {
+    pos: { ...snap.pos },
+    rotation: snap.rotation,
+    host: snap.hostUid,
+  });
 }
 
 function applyChainSnap(snap: ChainSnap, componentUids: string[]) {
@@ -339,11 +370,19 @@ function rotateSelected(direction: 1 | -1) {
   const piece = getState().track.pieces.find((p) => p.uid === selectedUid);
   if (!piece) return;
   const def = getDef(piece.defId);
+  const delta = def.rotateStep * direction;
   detach(selectedUid);
   updatePiece(selectedUid, {
-    rotation: (piece.rotation + def.rotateStep * direction + 720) % 360,
+    rotation: (piece.rotation + delta + 720) % 360,
   });
-  tryChainSnap([selectedUid]);
+  // Hosted borders share the piece's pos, so rotating them by the same delta
+  // about that shared origin keeps them concentric.
+  for (const b of getState().track.pieces) {
+    if (b.host === selectedUid) {
+      updatePiece(b.uid, { rotation: (b.rotation + delta + 720) % 360 });
+    }
+  }
+  tryChainSnap(connectedComponent(selectedUid));
 }
 
 function worldBbox(piece: Placed) {
