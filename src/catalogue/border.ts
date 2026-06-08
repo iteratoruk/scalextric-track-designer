@@ -229,3 +229,15 @@ export const c8279: PieceDef = makeInnerBorder({
   width: 40,
   borderFor: ["c8202-r1-curve", "c8278-r1-half-curve", "c8201-r1-hairpin"],
 });
+
+// C8280 R2 Inner Border, Kerb & Barrier — 22.5° sand band on the inside of an
+// R2 bend (inner edge 215 mm). R2 has more room than R1, so it's a slim band,
+// not a wedge. Same R2 host set as the R2 outer borders (C8228 / C8239).
+export const c8280: PieceDef = makeInnerBorder({
+  id: "c8280-r2-inner-border",
+  name: "C8280 R2 Inner Border (22.5°)",
+  centreRadius: 292.5,
+  angleDeg: 22.5,
+  width: 40,
+  borderFor: ["c8206-r2-curve", "c8193-racing-curve", "c8234-r2-half-curve"],
+});

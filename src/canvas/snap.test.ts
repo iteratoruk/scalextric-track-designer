@@ -437,3 +437,52 @@ describe("C8279 R1 inner border (45° section)", () => {
     expect(s1.pos.y).toBeCloseTo(slot1.y);
   });
 });
+
+describe("C8280 R2 inner border (22.5°)", () => {
+  const border = (overrides: Partial<Placed> = {}): Placed => ({
+    uid: "b1",
+    defId: "c8280-r2-inner-border",
+    pos: { x: 0, y: 0 },
+    rotation: 0,
+    mates: [],
+    ...overrides,
+  });
+
+  test("def: no connectors, 22.5° R2 arc, same R2 hosts as C8228/C8239", () => {
+    const def = getDef("c8280-r2-inner-border");
+    expect(def.connectors).toEqual([]);
+    expect(def.arc).toEqual({ centreRadius: 292.5, angleDeg: 22.5 });
+    expect(def.borderFor).toEqual([
+      "c8206-r2-curve",
+      "c8193-racing-curve",
+      "c8234-r2-half-curve",
+    ]);
+  });
+
+  test("snaps concentrically onto a single C8234 R2 half-curve", () => {
+    const host: Placed = {
+      uid: "c", defId: "c8234-r2-half-curve", pos: { x: 120, y: 80 }, rotation: 0, mates: [null, null],
+    };
+    const snap = findBorderSnap(border({ pos: { x: 123, y: 82 } }), [host]);
+    expect(snap).not.toBeNull();
+    expect(snap!.hostUid).toBe("c");
+    expect(snap!.rotation).toBe(0);
+    expect(snap!.pos.x).toBeCloseTo(120);
+    expect(snap!.pos.y).toBeCloseTo(80);
+  });
+
+  test("subdivides a 45° C8206 into two 22.5° inner slots", () => {
+    const host: Placed = {
+      uid: "c", defId: "c8206-r2-curve", pos: { x: 0, y: 0 }, rotation: 0, mates: [null, null],
+    };
+    const s0 = findBorderSnap(border({ pos: { x: 3, y: 2 } }), [host])!;
+    expect(s0.rotation).toBe(0);
+    const SIN225 = Math.sin(Math.PI / 8);
+    const COS225 = Math.cos(Math.PI / 8);
+    const slot1 = { x: 292.5 * SIN225, y: 292.5 * (1 - COS225) };
+    const s1 = findBorderSnap(border({ pos: slot1, rotation: 22.5 }), [host])!;
+    expect(s1.rotation).toBeCloseTo(22.5);
+    expect(s1.pos.x).toBeCloseTo(slot1.x);
+    expect(s1.pos.y).toBeCloseTo(slot1.y);
+  });
+});
